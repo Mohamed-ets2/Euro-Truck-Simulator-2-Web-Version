@@ -25,11 +25,60 @@
     </style>
 </head>
 
+
+    
 <body>
 
 <canvas id="gameCanvas"></canvas>
 
 <script src="game.js"></script>
+<div id="truckControls">
 
+    <div class="truckStatus">
+        <div class="statusBox">
+            <small>VELOCIDAD</small>
+            <strong id="bottomSpeed">0</strong>
+            <span>km/h</span>
+        </div>
+
+        <div class="statusBox">
+            <small>MARCHA</small>
+            <strong id="bottomGear">N</strong>
+        </div>
+
+        <div class="statusBox">
+            <small>CRUCERO</small>
+            <strong id="cruiseStatus">OFF</strong>
+        </div>
+
+        <div class="statusBox">
+            <small>INTERMITENTES</small>
+            <strong id="indicatorStatus">—</strong>
+        </div>
+
+        <div class="statusBox">
+            <small>LUCES</small>
+            <strong id="lightsStatus">OFF</strong>
+        </div>
+
+        <div class="statusBox">
+            <small>FRENO MOTOR</small>
+            <strong id="engineBrakeStatus">OFF</strong>
+        </div>
+    </div>
+
+    <div class="keyControls">
+        <div><b>W</b> Acelerar</div>
+        <div><b>S</b> Frenar</div>
+        <div><b>A</b> Izquierda</div>
+        <div><b>D</b> Derecha</div>
+        <div><b>+</b> Subir marcha</div>
+        <div><b>−</b> Bajar marcha</div>
+        <div><b>B</b> Marcha atrás</div>
+        <div><b>J</b> Trabajos</div>
+        <div><b>M</b> Mapa</div>
+    </div>
+
+</div>
 </body>
 </html>
