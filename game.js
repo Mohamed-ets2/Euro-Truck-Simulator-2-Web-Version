@@ -2,276 +2,212 @@
 
 /*
 ============================================================
- TRUCK DRIVER
- FASES 1 + 2 + 3
+ TRUCK DRIVER - GAME.JS COMPLETO
 ============================================================
 
- FASE 1:
- - Física del camión
- - Marchas 1-8
+ CONTROLES
+ -----------------------------------------------------------
+ W / S       Acelerar / frenar
+ A / D       Girar
+ + / =       Subir marcha
+ -           Bajar marcha
+ B           Marcha atrás
+ R           Repostar
+ N           Nuevo trabajo/destino
+ M           Mapa completo
+ L           Luces
+ P           Pausar
+ ESC         Cerrar mapa / menú
+
+ FUNCIONES
+ -----------------------------------------------------------
+ - Camión
+ - Física básica
+ - 8 marchas
  - Marcha atrás
  - RPM
- - Frenos
- - Freno motor
  - Combustible
  - Daños
- - Peso/carga
- - HUD
- - Controles
-
- FASE 2:
- - Mapa grande
+ - Dinero
+ - Trabajos
+ - Ciudades
+ - Pueblos
  - Autopistas
  - Autovías
  - Nacionales
  - Secundarias
- - Montaña
- - Ciudades
- - Pueblos
+ - Carreteras de montaña
  - Gasolineras
  - Talleres
- - Áreas de descanso
- - Señales
  - Minimapa
- - GPS básico
-
- FASE 3:
+ - GPS
+ - Límites de velocidad
+ - Multas
  - Tráfico
- - Coches
- - Furgonetas
- - Camiones
- - Autobuses
  - Semáforos
- - Colisiones
  - Día/noche
  - Lluvia
- - Nubes
- - Luces
+ - HUD
 ============================================================
 */
 
 
-// ==========================================================
+// ============================================================
 // CANVAS
-// ==========================================================
+// ============================================================
 
-const canvas =
-    document.getElementById("gameCanvas");
+const canvas = document.getElementById("gameCanvas");
 
 if (!canvas) {
     throw new Error(
-        'No existe <canvas id="gameCanvas"> en index.html'
+        'No se encuentra <canvas id="gameCanvas"></canvas> en index.html'
     );
 }
 
-const ctx =
-    canvas.getContext("2d");
+const ctx = canvas.getContext("2d");
 
 if (!ctx) {
-    throw new Error(
-        "No se pudo crear el contexto 2D."
-    );
+    throw new Error("No se pudo obtener el contexto 2D.");
 }
 
 
-// ==========================================================
-// TAMAÑO
-// ==========================================================
+// ============================================================
+// RESOLUCIÓN
+// ============================================================
 
 function resizeCanvas() {
 
-    canvas.width =
-        window.innerWidth;
-
-    canvas.height =
-        window.innerHeight;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 }
 
 resizeCanvas();
 
-window.addEventListener(
-    "resize",
-    resizeCanvas
-);
+window.addEventListener("resize", resizeCanvas);
 
 
-// ==========================================================
+// ============================================================
 // TECLADO
-// ==========================================================
+// ============================================================
 
-const keys = {
+const keys = Object.create(null);
 
-    w: false,
-    s: false,
-    a: false,
-    d: false
+window.addEventListener("keydown", function (event) {
 
-};
+    const key = event.key.toLowerCase();
 
+    keys[key] = true;
 
-window.addEventListener(
-    "keydown",
-    function(event) {
-
-        const key =
-            event.key.toLowerCase();
-
-
-        if (key === "w") {
-            keys.w = true;
-        }
-
-        if (key === "s") {
-            keys.s = true;
-        }
-
-        if (key === "a") {
-            keys.a = true;
-        }
-
-        if (key === "d") {
-            keys.d = true;
-        }
-
-
-        if (
-            key === "+" ||
-            key === "="
-        ) {
-
-            changeGear(1);
-        }
-
-
-        if (key === "-") {
-
-            changeGear(-1);
-        }
-
-
-        if (key === "b") {
-
-            toggleReverse();
-        }
-
-
-        if (key === "r") {
-
-            refuel();
-        }
-
-
-        if (key === "m") {
-
-            toggleMap();
-        }
-
-
-        // NUEVO FASE 3
-        if (key === "l") {
-
-            toggleLights();
-        }
-
-
-        if (
-            [
-                "w",
-                "a",
-                "s",
-                "d",
-                "+",
-                "=",
-                "-",
-                "b",
-                "r",
-                "m",
-                "l"
-            ].includes(key)
-        ) {
-
-            event.preventDefault();
-        }
-
+    if (
+        [
+            "w",
+            "a",
+            "s",
+            "d",
+            "r",
+            "b",
+            "m",
+            "n",
+            "l",
+            "p",
+            "+",
+            "=",
+            "-",
+            "escape"
+        ].includes(key)
+    ) {
+        event.preventDefault();
     }
-);
 
-
-window.addEventListener(
-    "keyup",
-    function(event) {
-
-        const key =
-            event.key.toLowerCase();
-
-
-        if (key === "w") {
-            keys.w = false;
-        }
-
-        if (key === "s") {
-            keys.s = false;
-        }
-
-        if (key === "a") {
-            keys.a = false;
-        }
-
-        if (key === "d") {
-            keys.d = false;
-        }
-
+    if (event.repeat) {
+        return;
     }
-);
+
+    if (key === "+" || key === "=") {
+        changeGear(1);
+    }
+
+    if (key === "-") {
+        changeGear(-1);
+    }
+
+    if (key === "b") {
+        toggleReverse();
+    }
+
+    if (key === "r") {
+        refuel();
+    }
+
+    if (key === "m") {
+        fullMap = !fullMap;
+    }
+
+    if (key === "n") {
+        if (!job.active) {
+            createRandomJob();
+        }
+    }
+
+    if (key === "l") {
+        lightsOn = !lightsOn;
+    }
+
+    if (key === "p") {
+        paused = !paused;
+        showMessage(
+            paused ? "JUEGO PAUSADO" : "JUEGO CONTINUADO"
+        );
+    }
+
+    if (key === "escape") {
+        fullMap = false;
+    }
+});
 
 
-// ==========================================================
+window.addEventListener("keyup", function (event) {
+
+    keys[event.key.toLowerCase()] = false;
+});
+
+
+// ============================================================
 // MUNDO
-// ==========================================================
+// ============================================================
 
-const WORLD_WIDTH =
-    10000;
-
-const WORLD_HEIGHT =
-    7500;
+const WORLD_WIDTH = 10000;
+const WORLD_HEIGHT = 7500;
 
 
-// ==========================================================
+// ============================================================
 // CÁMARA
-// ==========================================================
+// ============================================================
 
 const camera = {
-
-    x:
-        WORLD_WIDTH / 2,
-
-    y:
-        WORLD_HEIGHT / 2
-
+    x: 5000,
+    y: 3750
 };
 
 
-// ==========================================================
+// ============================================================
 // CAMIÓN
-// ==========================================================
+// ============================================================
 
 const truck = {
 
     x: 5000,
-
     y: 3750,
 
     angle: 0,
 
     speed: 0,
 
-    maxSpeed: 130,
+    gear: 1,
 
-    brakePower: 1.35,
+    reverse: false,
 
-    engineBrake: 0.025,
-
-    steering: 0.035,
+    rpm: 800,
 
     fuel: 100,
 
@@ -285,733 +221,103 @@ const truck = {
 
     cargoWeight: 0,
 
-    gear: 1,
+    maxSpeed: 130,
 
-    reverse: false,
+    speedLimiter: 130,
 
-    rpm: 800,
+    brakePower: 1.2,
 
-    minRPM: 700,
+    engineBrake: 0.018,
 
-    maxRPM: 2200,
-
-    idleRPM: 800,
-
-    speedLimiter: 130
-
+    steering: 0.035
 };
 
 
-// ==========================================================
-// CARGA
-// ==========================================================
-
-const cargo = {
-
-    name:
-        "Sin carga",
-
-    weight:
-        0,
-
-    loaded:
-        false
-
-};
-
-
-// ==========================================================
+// ============================================================
 // MARCHAS
-// ==========================================================
+// ============================================================
 
 const gears = {
 
     1: {
         maxSpeed: 18,
-        acceleration: 0.95
+        acceleration: 0.85
     },
 
     2: {
         maxSpeed: 32,
-        acceleration: 0.80
+        acceleration: 0.70
     },
 
     3: {
         maxSpeed: 48,
-        acceleration: 0.65
+        acceleration: 0.58
     },
 
     4: {
         maxSpeed: 65,
-        acceleration: 0.52
+        acceleration: 0.46
     },
 
     5: {
         maxSpeed: 82,
-        acceleration: 0.42
+        acceleration: 0.36
     },
 
     6: {
         maxSpeed: 98,
-        acceleration: 0.34
+        acceleration: 0.29
     },
 
     7: {
         maxSpeed: 115,
-        acceleration: 0.28
+        acceleration: 0.23
     },
 
     8: {
         maxSpeed: 130,
-        acceleration: 0.22
+        acceleration: 0.18
     }
-
 };
 
 
-// ==========================================================
-// UTILIDADES
-// ==========================================================
+// ============================================================
+// ECONOMÍA
+// ============================================================
 
-function distance(
-    x1,
-    y1,
-    x2,
-    y2
-) {
+let money = 25000;
 
-    return Math.hypot(
-        x2 - x1,
-        y2 - y1
-    );
-}
 
+// ============================================================
+// CARGA
+// ============================================================
 
-function clamp(
-    value,
-    min,
-    max
-) {
+const cargo = {
 
-    return Math.max(
-        min,
-        Math.min(
-            max,
-            value
-        )
-    );
-}
+    name: "Sin carga",
 
+    weight: 0,
 
-// ==========================================================
-// PESO
-// ==========================================================
+    loaded: false
+};
 
-function getTotalWeight() {
 
-    return (
-        truck.emptyWeight +
-        truck.cargoWeight
-    );
-}
-
-
-function getWeightFactor() {
-
-    const weight =
-        getTotalWeight();
-
-    const factor =
-        8000 / weight;
-
-    return clamp(
-        factor,
-        0.25,
-        1
-    );
-}
-
-
-// ==========================================================
-// MARCHAS
-// ==========================================================
-
-function changeGear(
-    direction
-) {
-
-    if (truck.reverse) {
-
-        showMessage(
-            "Pulsa B para salir de R."
-        );
-
-        return;
-    }
-
-
-    truck.gear +=
-        direction;
-
-
-    truck.gear =
-        clamp(
-            truck.gear,
-            1,
-            8
-        );
-
-
-    showMessage(
-        "MARCHA " +
-        truck.gear
-    );
-}
-
-
-function toggleReverse() {
-
-    if (truck.speed > 3) {
-
-        showMessage(
-            "Detén el camión antes de poner R."
-        );
-
-        return;
-    }
-
-
-    truck.reverse =
-        !truck.reverse;
-
-
-    if (truck.reverse) {
-
-        truck.gear =
-            0;
-
-        showMessage(
-            "MARCHA ATRÁS - R"
-        );
-
-    } else {
-
-        truck.gear =
-            1;
-
-        showMessage(
-            "MARCHA 1"
-        );
-    }
-}
-
-
-// ==========================================================
-// RPM
-// ==========================================================
-
-function updateRPM() {
-
-    if (truck.reverse) {
-
-        const targetRPM =
-            truck.idleRPM +
-            truck.speed * 35;
-
-
-        truck.rpm +=
-            (
-                targetRPM -
-                truck.rpm
-            ) * 0.08;
-
-        return;
-    }
-
-
-    const gear =
-        gears[truck.gear];
-
-
-    if (!gear) {
-
-        return;
-    }
-
-
-    const ratio =
-        truck.speed /
-        gear.maxSpeed;
-
-
-    let targetRPM =
-        truck.minRPM +
-        ratio *
-        (
-            truck.maxRPM -
-            truck.minRPM
-        );
-
-
-    if (keys.w) {
-
-        targetRPM +=
-            150;
-    }
-
-
-    if (keys.s) {
-
-        targetRPM -=
-            100;
-    }
-
-
-    targetRPM =
-        clamp(
-            targetRPM,
-            truck.minRPM,
-            truck.maxRPM
-        );
-
-
-    truck.rpm +=
-        (
-            targetRPM -
-            truck.rpm
-        ) * 0.12;
-}
-
-
-// ==========================================================
-// ACELERACIÓN
-// ==========================================================
-
-function updateAcceleration() {
-
-    if (
-        truck.fuel <= 0
-    ) {
-
-        return;
-    }
-
-
-    if (truck.reverse) {
-
-        if (keys.w) {
-
-            truck.speed +=
-                0.38 *
-                getWeightFactor();
-        }
-
-        return;
-    }
-
-
-    const gear =
-        gears[truck.gear];
-
-
-    if (!gear) {
-
-        return;
-    }
-
-
-    if (keys.w) {
-
-        let power =
-            gear.acceleration *
-            getWeightFactor();
-
-
-        if (
-            truck.rpm > 2000
-        ) {
-
-            power *=
-                0.65;
-        }
-
-
-        if (
-            truck.rpm < 900
-        ) {
-
-            power *=
-                0.70;
-        }
-
-
-        truck.speed +=
-            power;
-    }
-}
-
-
-// ==========================================================
-// FRENOS
-// ==========================================================
-
-function updateBrakes() {
-
-    if (!keys.s) {
-
-        return;
-    }
-
-
-    truck.speed -=
-        truck.brakePower;
-
-
-    truck.speed -=
-        truck.engineBrake *
-        (
-            1 +
-            truck.gear *
-            0.3
-        );
-}
-
-
-// ==========================================================
-// RESISTENCIA
-// ==========================================================
-
-function applyNaturalResistance() {
-
-    if (
-        !keys.w &&
-        !keys.s
-    ) {
-
-        truck.speed *=
-            0.992;
-
-
-        if (
-            truck.speed > 0
-        ) {
-
-            truck.speed -=
-                truck.engineBrake *
-                (
-                    1 +
-                    truck.gear *
-                    0.15
-                );
-        }
-    }
-}
-
-
-// ==========================================================
-// VELOCIDAD
-// ==========================================================
-
-function applySpeedLimits() {
-
-    let maximum;
-
-
-    if (truck.reverse) {
-
-        maximum =
-            25;
-
-    } else {
-
-        const gear =
-            gears[truck.gear];
-
-        maximum =
-            gear.maxSpeed;
-    }
-
-
-    maximum =
-        Math.min(
-            maximum,
-            truck.speedLimiter
-        );
-
-
-    if (
-        truck.speed >
-        maximum
-    ) {
-
-        truck.speed =
-            maximum;
-    }
-
-
-    if (
-        truck.speed < 0
-    ) {
-
-        truck.speed =
-            0;
-    }
-}
-
-
-// ==========================================================
-// DIRECCIÓN
-// ==========================================================
-
-function updateSteering() {
-
-    const speedFactor =
-        Math.min(
-            1,
-            truck.speed / 40
-        );
-
-
-    const steeringAmount =
-        truck.steering *
-        (
-            1 -
-            speedFactor *
-            0.55
-        );
-
-
-    if (
-        keys.a &&
-        truck.speed > 0
-    ) {
-
-        truck.angle -=
-            steeringAmount;
-    }
-
-
-    if (
-        keys.d &&
-        truck.speed > 0
-    ) {
-
-        truck.angle +=
-            steeringAmount;
-    }
-}
-
-
-// ==========================================================
-// MOVIMIENTO
-// ==========================================================
-
-function updateMovement() {
-
-    let movement =
-        truck.speed *
-        0.23;
-
-
-    if (truck.reverse) {
-
-        movement *=
-            -1;
-    }
-
-
-    truck.x +=
-        Math.sin(
-            truck.angle
-        ) *
-        movement;
-
-
-    truck.y -=
-        Math.cos(
-            truck.angle
-        ) *
-        movement;
-}
-
-
-// ==========================================================
-// LÍMITES
-// ==========================================================
-
-function keepTruckInsideWorld() {
-
-    const margin =
-        100;
-
-
-    if (
-        truck.x < margin
-    ) {
-
-        truck.x =
-            margin;
-
-        registerDamage(1);
-    }
-
-
-    if (
-        truck.x >
-        WORLD_WIDTH -
-        margin
-    ) {
-
-        truck.x =
-            WORLD_WIDTH -
-            margin;
-
-        registerDamage(1);
-    }
-
-
-    if (
-        truck.y < margin
-    ) {
-
-        truck.y =
-            margin;
-
-        registerDamage(1);
-    }
-
-
-    if (
-        truck.y >
-        WORLD_HEIGHT -
-        margin
-    ) {
-
-        truck.y =
-            WORLD_HEIGHT -
-            margin;
-
-        registerDamage(1);
-    }
-}
-
-
-// ==========================================================
-// COMBUSTIBLE
-// ==========================================================
-
-function updateFuel() {
-
-    if (
-        truck.speed <= 0
-    ) {
-
-        return;
-    }
-
-
-    const weightFactor =
-        getTotalWeight() /
-        8000;
-
-
-    const consumption =
-        0.000025 *
-        truck.speed *
-        weightFactor;
-
-
-    truck.fuel -=
-        consumption;
-
-
-    truck.fuel =
-        Math.max(
-            0,
-            truck.fuel
-        );
-}
-
-
-function refuel() {
-
-    const station =
-        getNearestServicePoint(
-            "gasolinera"
-        );
-
-
-    if (
-        station &&
-        distance(
-            truck.x,
-            truck.y,
-            station.x,
-            station.y
-        ) < 180
-    ) {
-
-        truck.fuel =
-            truck.fuelCapacity;
-
-
-        showMessage(
-            "⛽ DEPÓSITO LLENO"
-        );
-
-    } else {
-
-        showMessage(
-            "Acércate a una gasolinera."
-        );
-    }
-}
-
-
-// ==========================================================
-// DAÑOS
-// ==========================================================
-
-function registerDamage(
-    amount
-) {
-
-    truck.damage +=
-        amount;
-
-
-    truck.damage =
-        clamp(
-            truck.damage,
-            0,
-            100
-        );
-}
-
-
-// ==========================================================
+// ============================================================
 // MAPA
-// ==========================================================
+// ============================================================
 
 const roads = [];
-
 const cities = [];
-
 const villages = [];
+const pois = [];
+const traffic = [];
 
-const pointsOfInterest = [];
 
-
-// ==========================================================
+// ============================================================
 // CARRETERAS
-// ==========================================================
+// ============================================================
 
-function createRoad(
-    name,
-    type,
-    points,
-    width
-) {
+function addRoad(name, type, points, width = 45) {
 
     roads.push({
 
@@ -1019,17 +325,15 @@ function createRoad(
         type,
         points,
         width
-
     });
 }
 
 
-function createCity(
-    name,
-    x,
-    y,
-    size
-) {
+// ============================================================
+// CIUDADES
+// ============================================================
+
+function addCity(name, x, y, size = 180) {
 
     cities.push({
 
@@ -1037,174 +341,83 @@ function createCity(
         x,
         y,
         size
-
     });
 }
 
 
-function createVillage(
-    name,
-    x,
-    y
-) {
+// ============================================================
+// PUEBLOS
+// ============================================================
+
+function addVillage(name, x, y) {
 
     villages.push({
 
         name,
         x,
         y
-
     });
 }
 
 
-function createPOI(
-    name,
-    type,
-    x,
-    y
-) {
+// ============================================================
+// PUNTOS DE INTERÉS
+// ============================================================
 
-    pointsOfInterest.push({
+function addPOI(name, type, x, y) {
+
+    pois.push({
 
         name,
         type,
         x,
         y
-
     });
 }
-// ==========================================================
-// CONSTRUCCIÓN DEL MAPA
-// ==========================================================
+
+
+// ============================================================
+// CREACIÓN DEL MAPA
+// ============================================================
 
 function buildMap() {
 
     roads.length = 0;
     cities.length = 0;
     villages.length = 0;
-    pointsOfInterest.length = 0;
+    pois.length = 0;
 
-
-    // ------------------------------------------------------
+    // --------------------------------------------------------
     // CIUDADES
-    // ------------------------------------------------------
+    // --------------------------------------------------------
 
-    createCity(
-        "Madrid",
-        5000,
-        3750,
-        260
-    );
+    addCity("Madrid", 5000, 3750, 280);
+    addCity("Toledo", 3900, 4700, 180);
+    addCity("Valencia", 7900, 3900, 240);
+    addCity("Cuenca", 6500, 4700, 150);
+    addCity("Guadalajara", 6000, 2700, 150);
+    addCity("Zaragoza", 8300, 1700, 230);
+    addCity("Segovia", 3700, 2200, 140);
+    addCity("Ávila", 2500, 3400, 150);
 
-    createCity(
-        "Toledo",
-        3900,
-        4700,
-        170
-    );
-
-    createCity(
-        "Valencia",
-        7900,
-        3900,
-        230
-    );
-
-    createCity(
-        "Cuenca",
-        6500,
-        4700,
-        150
-    );
-
-    createCity(
-        "Guadalajara",
-        6000,
-        2700,
-        150
-    );
-
-    createCity(
-        "Zaragoza",
-        8300,
-        1700,
-        230
-    );
-
-    createCity(
-        "Segovia",
-        3700,
-        2200,
-        140
-    );
-
-    createCity(
-        "Avila",
-        2500,
-        3400,
-        150
-    );
-
-
-    // ------------------------------------------------------
+    // --------------------------------------------------------
     // PUEBLOS
-    // ------------------------------------------------------
+    // --------------------------------------------------------
 
-    createVillage(
-        "Alcala",
-        5550,
-        3000
-    );
+    addVillage("Alcalá", 5550, 3000);
+    addVillage("Aranjuez", 4500, 4300);
+    addVillage("Tarancón", 5500, 4400);
+    addVillage("Ocaña", 4300, 5000);
+    addVillage("Medina", 3100, 2500);
+    addVillage("Sacedón", 6500, 3300);
+    addVillage("Molina", 7000, 2700);
+    addVillage("Requena", 7200, 4600);
 
-    createVillage(
-        "Tarancon",
-        5500,
-        4400
-    );
+    // --------------------------------------------------------
+    // AUTOPISTAS
+    // --------------------------------------------------------
 
-    createVillage(
-        "Aranjuez",
-        4500,
-        4300
-    );
-
-    createVillage(
-        "Ocana",
-        4300,
-        5000
-    );
-
-    createVillage(
-        "Medina",
-        3100,
-        2500
-    );
-
-    createVillage(
-        "Sacedon",
-        6500,
-        3300
-    );
-
-    createVillage(
-        "Molina",
-        7000,
-        2700
-    );
-
-    createVillage(
-        "Requena",
-        7200,
-        4600
-    );
-
-
-    // ------------------------------------------------------
-    // AUTOPISTA A-1
-    // ------------------------------------------------------
-
-    createRoad(
+    addRoad(
         "A-1",
         "autopista",
         [
@@ -1212,17 +425,12 @@ function buildMap() {
             { x: 4700, y: 3200 },
             { x: 4200, y: 2600 },
             { x: 3700, y: 2200 },
-            { x: 3200, y: 1800 }
+            { x: 3100, y: 1800 }
         ],
-        70
+        80
     );
 
-
-    // ------------------------------------------------------
-    // AUTOPISTA A-2
-    // ------------------------------------------------------
-
-    createRoad(
+    addRoad(
         "A-2",
         "autopista",
         [
@@ -1232,238 +440,1152 @@ function buildMap() {
             { x: 7600, y: 1900 },
             { x: 8300, y: 1700 }
         ],
-        70
+        80
     );
 
-
-    // ------------------------------------------------------
-    // AUTOVIA A-3
-    // ------------------------------------------------------
-
-    createRoad(
+    addRoad(
         "A-3",
-        "autovia",
+        "autopista",
         [
             { x: 5000, y: 3750 },
-            { x: 6000, y: 3900 },
-            { x: 7000, y: 3950 },
+            { x: 5900, y: 3800 },
+            { x: 6800, y: 3900 },
             { x: 7900, y: 3900 }
         ],
-        65
+        80
     );
 
+    // --------------------------------------------------------
+    // AUTOVÍAS
+    // --------------------------------------------------------
 
-    // ------------------------------------------------------
-    // AUTOVIA A-4
-    // ------------------------------------------------------
-
-    createRoad(
+    addRoad(
         "A-4",
         "autovia",
         [
             { x: 5000, y: 3750 },
-            { x: 4700, y: 4200 },
-            { x: 4500, y: 4500 },
+            { x: 4900, y: 4100 },
+            { x: 4500, y: 4300 },
             { x: 3900, y: 4700 }
         ],
         65
     );
 
+    addRoad(
+        "A-40",
+        "autovia",
+        [
+            { x: 3900, y: 4700 },
+            { x: 4700, y: 4800 },
+            { x: 5600, y: 4800 },
+            { x: 6500, y: 4700 }
+        ],
+        65
+    );
 
-    // ------------------------------------------------------
+    // --------------------------------------------------------
     // NACIONALES
-    // ------------------------------------------------------
+    // --------------------------------------------------------
 
-    createRoad(
+    addRoad(
         "N-320",
         "nacional",
         [
             { x: 5000, y: 3750 },
-            { x: 5500, y: 3300 },
-            { x: 6500, y: 3300 },
-            { x: 7000, y: 2700 }
-        ],
-        38
-    );
-
-
-    createRoad(
-        "N-400",
-        "nacional",
-        [
-            { x: 3900, y: 4700 },
-            { x: 4700, y: 5000 },
-            { x: 5500, y: 4400 },
-            { x: 6500, y: 4700 }
-        ],
-        38
-    );
-
-
-    // ------------------------------------------------------
-    // SECUNDARIAS
-    // ------------------------------------------------------
-
-    createRoad(
-        "CM-40",
-        "secundaria",
-        [
-            { x: 3900, y: 4700 },
-            { x: 3500, y: 4400 },
-            { x: 3000, y: 4000 },
-            { x: 2500, y: 3400 }
-        ],
-        25
-    );
-
-
-    createRoad(
-        "CV-25",
-        "secundaria",
-        [
-            { x: 7900, y: 3900 },
-            { x: 7400, y: 4300 },
-            { x: 7200, y: 4600 },
-            { x: 6500, y: 4700 }
-        ],
-        25
-    );
-
-
-    createRoad(
-        "GU-900",
-        "secundaria",
-        [
+            { x: 5400, y: 3400 },
             { x: 6000, y: 2700 },
             { x: 6500, y: 3300 },
             { x: 7000, y: 2700 }
         ],
-        24
+        48
     );
 
-
-    // ------------------------------------------------------
-    // CARRETERA DE MONTAÑA
-    // ------------------------------------------------------
-
-    createRoad(
-        "M-300",
-        "montana",
+    addRoad(
+        "N-2",
+        "nacional",
         [
-            { x: 3200, y: 1800 },
-            { x: 2800, y: 1600 },
-            { x: 2300, y: 1800 },
-            { x: 1900, y: 2200 },
-            { x: 1700, y: 2800 }
+            { x: 3700, y: 2200 },
+            { x: 4400, y: 2500 },
+            { x: 5000, y: 3000 },
+            { x: 6000, y: 2700 }
         ],
-        22
+        48
     );
 
+    addRoad(
+        "N-330",
+        "nacional",
+        [
+            { x: 6500, y: 4700 },
+            { x: 7200, y: 4600 },
+            { x: 7900, y: 3900 }
+        ],
+        48
+    );
 
-    // ------------------------------------------------------
-    // GASOLINERAS
-    // ------------------------------------------------------
+    // --------------------------------------------------------
+    // SECUNDARIAS
+    // --------------------------------------------------------
 
-    createPOI(
+    addRoad(
+        "CM-400",
+        "secundaria",
+        [
+            { x: 3900, y: 4700 },
+            { x: 4300, y: 5000 },
+            { x: 5000, y: 5200 }
+        ],
+        35
+    );
+
+    addRoad(
+        "CM-401",
+        "secundaria",
+        [
+            { x: 5000, y: 5200 },
+            { x: 5500, y: 4400 },
+            { x: 6500, y: 4700 }
+        ],
+        35
+    );
+
+    addRoad(
+        "CM-402",
+        "secundaria",
+        [
+            { x: 6000, y: 2700 },
+            { x: 5550, y: 3000 },
+            { x: 5000, y: 3000 }
+        ],
+        35
+    );
+
+    // --------------------------------------------------------
+    // MONTAÑA
+    // --------------------------------------------------------
+
+    addRoad(
+        "M-10",
+        "montaña",
+        [
+            { x: 2500, y: 3400 },
+            { x: 2900, y: 3000 },
+            { x: 3100, y: 2500 },
+            { x: 3700, y: 2200 }
+        ],
+        30
+    );
+
+    // --------------------------------------------------------
+    // SERVICIOS
+    // --------------------------------------------------------
+
+    addPOI(
         "Gasolinera Madrid",
         "gasolinera",
         5200,
         3900
     );
 
-    createPOI(
-        "Gasolinera A-3",
+    addPOI(
+        "Gasolinera Toledo",
         "gasolinera",
-        6800,
-        3950
+        4100,
+        4500
     );
 
-    createPOI(
-        "Gasolinera A-1",
+    addPOI(
+        "Gasolinera Valencia",
         "gasolinera",
-        3900,
-        2500
+        7600,
+        4100
     );
 
-
-    // ------------------------------------------------------
-    // TALLERES
-    // ------------------------------------------------------
-
-    createPOI(
+    addPOI(
         "Taller Madrid",
         "taller",
         4800,
         3500
     );
 
-    createPOI(
-        "Taller Valencia",
+    addPOI(
+        "Taller Zaragoza",
         "taller",
-        7750,
-        4100
+        8100,
+        1900
     );
 
-
-    // ------------------------------------------------------
-    // AREAS DE DESCANSO
-    // ------------------------------------------------------
-
-    createPOI(
-        "Area de descanso A-3",
+    addPOI(
+        "Área de descanso",
         "descanso",
         6200,
-        3900
-    );
-
-    createPOI(
-        "Area de descanso A-1",
-        "descanso",
-        3500,
-        2000
+        3200
     );
 }
-
 
 buildMap();
 
 
-// ==========================================================
-// MAPA COMPLETO
-// ==========================================================
+// ============================================================
+// TRÁFICO
+// ============================================================
 
-let fullMap = false;
+function createTraffic() {
+
+    traffic.length = 0;
+
+    const colors = [
+        "#d22",
+        "#eee",
+        "#333",
+        "#168",
+        "#c90",
+        "#6a6"
+    ];
+
+    for (let i = 0; i < 28; i++) {
+
+        const road =
+            roads[
+                Math.floor(
+                    Math.random() * roads.length
+                )
+            ];
+
+        const point =
+            road.points[
+                Math.floor(
+                    Math.random() *
+                    road.points.length
+                )
+            ];
+
+        traffic.push({
+
+            x: point.x + (Math.random() * 60 - 30),
+
+            y: point.y + (Math.random() * 60 - 30),
+
+            angle: Math.random() * Math.PI * 2,
+
+            speed: 0.5 + Math.random() * 1.2,
+
+            color:
+                colors[
+                    Math.floor(
+                        Math.random() * colors.length
+                    )
+                ]
+        });
+    }
+}
+
+createTraffic();
 
 
-function toggleMap() {
+// ============================================================
+// TRABAJOS
+// ============================================================
 
-    fullMap =
-        !fullMap;
+const jobs = [
+
+    {
+        cargo: "Frigorífico",
+        weight: 18000,
+        from: "Madrid",
+        to: "Valencia",
+        reward: 4200
+    },
+
+    {
+        cargo: "Maquinaria",
+        weight: 22000,
+        from: "Zaragoza",
+        to: "Madrid",
+        reward: 5100
+    },
+
+    {
+        cargo: "Muebles",
+        weight: 12000,
+        from: "Toledo",
+        to: "Cuenca",
+        reward: 2800
+    },
+
+    {
+        cargo: "Productos agrícolas",
+        weight: 16000,
+        from: "Valencia",
+        to: "Madrid",
+        reward: 3900
+    },
+
+    {
+        cargo: "Material industrial",
+        weight: 24000,
+        from: "Guadalajara",
+        to: "Toledo",
+        reward: 3600
+    },
+
+    {
+        cargo: "Electrónica",
+        weight: 10000,
+        from: "Segovia",
+        to: "Zaragoza",
+        reward: 4400
+    }
+];
 
 
-    if (fullMap) {
+const job = {
+
+    active: false,
+
+    cargo: "",
+
+    weight: 0,
+
+    from: "",
+
+    to: "",
+
+    reward: 0,
+
+    destination: null,
+
+    distance: 0
+};
+
+
+function findCity(name) {
+
+    return cities.find(
+        city => city.name === name
+    );
+}
+
+
+function createRandomJob() {
+
+    const selected =
+        jobs[
+            Math.floor(
+                Math.random() * jobs.length
+            )
+        ];
+
+    const destination =
+        findCity(selected.to);
+
+    if (!destination) {
+        return;
+    }
+
+    job.active = true;
+
+    job.cargo = selected.cargo;
+
+    job.weight = selected.weight;
+
+    job.from = selected.from;
+
+    job.to = selected.to;
+
+    job.reward = selected.reward;
+
+    job.destination = destination;
+
+    job.distance = distance(
+        truck.x,
+        truck.y,
+        destination.x,
+        destination.y
+    );
+
+    truck.cargoWeight =
+        selected.weight;
+
+    cargo.name =
+        selected.cargo;
+
+    cargo.weight =
+        selected.weight;
+
+    cargo.loaded = true;
+
+    showMessage(
+        "NUEVO TRABAJO: " +
+        selected.cargo +
+        " → " +
+        selected.to
+    );
+}
+
+
+function updateJob() {
+
+    if (!job.active) {
+        return;
+    }
+
+    if (!job.destination) {
+        return;
+    }
+
+    job.distance =
+        distance(
+            truck.x,
+            truck.y,
+            job.destination.x,
+            job.destination.y
+        );
+
+    if (job.distance < 150) {
+
+        completeJob();
+    }
+}
+
+
+function completeJob() {
+
+    money += job.reward;
+
+    showMessage(
+        "ENTREGA COMPLETADA +€" +
+        job.reward
+    );
+
+    job.active = false;
+
+    job.destination = null;
+
+    truck.cargoWeight = 0;
+
+    cargo.name = "Sin carga";
+
+    cargo.weight = 0;
+
+    cargo.loaded = false;
+}
+
+
+// ============================================================
+// FUNCIONES GENERALES
+// ============================================================
+
+function clamp(value, min, max) {
+
+    return Math.max(
+        min,
+        Math.min(max, value)
+    );
+}
+
+
+function distance(x1, y1, x2, y2) {
+
+    return Math.hypot(
+        x2 - x1,
+        y2 - y1
+    );
+}
+
+
+function totalWeight() {
+
+    return (
+        truck.emptyWeight +
+        truck.cargoWeight
+    );
+}
+
+
+function weightFactor() {
+
+    return clamp(
+        8000 / totalWeight(),
+        0.25,
+        1
+    );
+}
+
+
+// ============================================================
+// CAMBIAR MARCHA
+// ============================================================
+
+function changeGear(direction) {
+
+    if (truck.reverse) {
 
         showMessage(
-            "MAPA ABIERTO - Pulsa M para cerrar"
+            "Pulsa B para quitar la marcha atrás"
+        );
+
+        return;
+    }
+
+    if (Math.abs(truck.speed) > 8) {
+
+        showMessage(
+            "Reduce la velocidad para cambiar"
+        );
+
+        return;
+    }
+
+    truck.gear += direction;
+
+    truck.gear =
+        clamp(
+            truck.gear,
+            1,
+            8
+        );
+
+    showMessage(
+        "MARCHA " +
+        truck.gear
+    );
+}
+
+
+// ============================================================
+// MARCHA ATRÁS
+// ============================================================
+
+function toggleReverse() {
+
+    if (truck.speed > 3) {
+
+        showMessage(
+            "Detén el camión para poner R"
+        );
+
+        return;
+    }
+
+    truck.reverse =
+        !truck.reverse;
+
+    if (truck.reverse) {
+
+        truck.gear = 0;
+
+        showMessage(
+            "MARCHA ATRÁS R"
         );
 
     } else {
 
+        truck.gear = 1;
+
         showMessage(
-            "MAPA CERRADO"
+            "MARCHA 1"
         );
     }
 }
 
 
-// ==========================================================
-// CONVERSIÓN MUNDO -> PANTALLA
-// ==========================================================
+// ============================================================
+// MOTOR
+// ============================================================
 
-function worldToScreen(
-    x,
-    y
-) {
+function updateEngine() {
+
+    if (truck.fuel <= 0) {
+
+        truck.speed *= 0.985;
+
+        return;
+    }
+
+    if (truck.reverse) {
+
+        if (keys["w"]) {
+
+            truck.speed +=
+                0.35 *
+                weightFactor();
+        }
+
+        return;
+    }
+
+    const currentGear =
+        gears[truck.gear];
+
+    if (!currentGear) {
+        return;
+    }
+
+    if (keys["w"]) {
+
+        let acceleration =
+            currentGear.acceleration *
+            weightFactor();
+
+        if (truck.rpm > 2100) {
+            acceleration *= 0.55;
+        }
+
+        if (truck.rpm < 900) {
+            acceleration *= 0.55;
+        }
+
+        truck.speed +=
+            acceleration;
+    }
+}
+
+
+// ============================================================
+// FRENADO
+// ============================================================
+
+function updateBrakes() {
+
+    if (!keys["s"]) {
+        return;
+    }
+
+    truck.speed -=
+        truck.brakePower;
+
+    truck.speed -=
+        truck.engineBrake *
+        (1 + truck.gear * 0.25);
+
+    if (truck.speed < 0) {
+        truck.speed = 0;
+    }
+}
+
+
+// ============================================================
+// RESISTENCIA
+// ============================================================
+
+function updateResistance() {
+
+    if (!keys["w"] && !keys["s"]) {
+
+        truck.speed *= 0.993;
+
+        truck.speed -=
+            truck.engineBrake;
+    }
+
+    if (truck.speed < 0.05) {
+        truck.speed = 0;
+    }
+}
+
+
+// ============================================================
+// LÍMITE POR MARCHA
+// ============================================================
+
+function updateSpeedLimit() {
+
+    let maximum;
+
+    if (truck.reverse) {
+
+        maximum = 25;
+
+    } else {
+
+        maximum =
+            gears[truck.gear].maxSpeed;
+    }
+
+    maximum =
+        Math.min(
+            maximum,
+            truck.speedLimiter
+        );
+
+    if (truck.speed > maximum) {
+
+        truck.speed = maximum;
+    }
+}
+
+
+// ============================================================
+// DIRECCIÓN
+// ============================================================
+
+function updateSteering() {
+
+    if (truck.speed <= 0.1) {
+        return;
+    }
+
+    const factor =
+        clamp(
+            truck.speed / 80,
+            0,
+            1
+        );
+
+    const steering =
+        truck.steering *
+        (1 - factor * 0.45);
+
+    if (keys["a"]) {
+
+        truck.angle -=
+            steering;
+    }
+
+    if (keys["d"]) {
+
+        truck.angle +=
+            steering;
+    }
+}
+
+
+// ============================================================
+// MOVIMIENTO
+// ============================================================
+
+function updateMovement() {
+
+    let movement =
+        truck.speed * 0.24;
+
+    if (truck.reverse) {
+        movement *= -1;
+    }
+
+    truck.x +=
+        Math.sin(truck.angle) *
+        movement;
+
+    truck.y -=
+        Math.cos(truck.angle) *
+        movement;
+}
+
+
+// ============================================================
+// LÍMITES DEL MAPA
+// ============================================================
+
+function keepInsideWorld() {
+
+    const margin = 100;
+
+    if (truck.x < margin) {
+
+        truck.x = margin;
+
+        registerDamage(0.2);
+    }
+
+    if (
+        truck.x >
+        WORLD_WIDTH - margin
+    ) {
+
+        truck.x =
+            WORLD_WIDTH - margin;
+
+        registerDamage(0.2);
+    }
+
+    if (truck.y < margin) {
+
+        truck.y = margin;
+
+        registerDamage(0.2);
+    }
+
+    if (
+        truck.y >
+        WORLD_HEIGHT - margin
+    ) {
+
+        truck.y =
+            WORLD_HEIGHT - margin;
+
+        registerDamage(0.2);
+    }
+}
+
+
+// ============================================================
+// RPM
+// ============================================================
+
+function updateRPM() {
+
+    let target;
+
+    if (truck.reverse) {
+
+        target =
+            800 +
+            truck.speed * 35;
+
+    } else {
+
+        const gear =
+            gears[truck.gear];
+
+        const ratio =
+            truck.speed /
+            gear.maxSpeed;
+
+        target =
+            750 +
+            ratio * 1450;
+
+        if (keys["w"]) {
+            target += 120;
+        }
+    }
+
+    target =
+        clamp(
+            target,
+            700,
+            2200
+        );
+
+    truck.rpm +=
+        (target - truck.rpm) *
+        0.1;
+}
+
+
+// ============================================================
+// COMBUSTIBLE
+// ============================================================
+
+function updateFuel() {
+
+    if (truck.speed <= 0) {
+        return;
+    }
+
+    truck.fuel -=
+        0.000035 *
+        truck.speed *
+        (totalWeight() / 8000);
+
+    truck.fuel =
+        clamp(
+            truck.fuel,
+            0,
+            truck.fuelCapacity
+        );
+}
+
+
+// ============================================================
+// DAÑOS
+// ============================================================
+
+function registerDamage(amount) {
+
+    truck.damage += amount;
+
+    truck.damage =
+        clamp(
+            truck.damage,
+            0,
+            truck.maxDamage
+        );
+}
+
+
+// ============================================================
+// SERVICIOS
+// ============================================================
+
+function nearestPOI(type) {
+
+    let nearest = null;
+
+    let best = Infinity;
+
+    for (const poi of pois) {
+
+        if (poi.type !== type) {
+            continue;
+        }
+
+        const d =
+            distance(
+                truck.x,
+                truck.y,
+                poi.x,
+                poi.y
+            );
+
+        if (d < best) {
+
+            best = d;
+
+            nearest = poi;
+        }
+    }
+
+    return nearest;
+}
+
+
+function refuel() {
+
+    const station =
+        nearestPOI("gasolinera");
+
+    if (!station) {
+        return;
+    }
+
+    const d =
+        distance(
+            truck.x,
+            truck.y,
+            station.x,
+            station.y
+        );
+
+    if (d < 180) {
+
+        const cost =
+            Math.round(
+                (100 - truck.fuel) *
+                1.8
+            );
+
+        if (money < cost) {
+
+            showMessage(
+                "NO TIENES DINERO SUFICIENTE"
+            );
+
+            return;
+        }
+
+        money -= cost;
+
+        truck.fuel =
+            truck.fuelCapacity;
+
+        showMessage(
+            "⛽ REPOSTAJE €" +
+            cost
+        );
+
+    } else {
+
+        showMessage(
+            "Acércate a una gasolinera"
+        );
+    }
+}
+
+
+// ============================================================
+// CARRETERA MÁS CERCANA
+// ============================================================
+
+let currentRoad = null;
+
+function nearestRoad() {
+
+    let closest = null;
+
+    let best = Infinity;
+
+    for (const road of roads) {
+
+        for (const point of road.points) {
+
+            const d =
+                distance(
+                    truck.x,
+                    truck.y,
+                    point.x,
+                    point.y
+                );
+
+            if (d < best) {
+
+                best = d;
+
+                closest = road;
+            }
+        }
+    }
+
+    return closest;
+}
+
+
+function updateCurrentRoad() {
+
+    currentRoad =
+        nearestRoad();
+}
+
+
+// ============================================================
+// LÍMITE DE CARRETERA
+// ============================================================
+
+function roadSpeedLimit(road) {
+
+    if (!road) {
+        return 50;
+    }
+
+    switch (road.type) {
+
+        case "autopista":
+            return 120;
+
+        case "autovia":
+            return 110;
+
+        case "nacional":
+            return 90;
+
+        case "secundaria":
+            return 80;
+
+        case "montaña":
+            return 60;
+
+        default:
+            return 50;
+    }
+}
+
+
+// ============================================================
+// MULTAS
+// ============================================================
+
+let lastFine = 0;
+let fines = 0;
+
+function updateFines() {
+
+    const limit =
+        roadSpeedLimit(
+            currentRoad
+        );
+
+    if (
+        truck.speed >
+        limit + 15
+    ) {
+
+        const now =
+            Date.now();
+
+        if (
+            now - lastFine >
+            12000
+        ) {
+
+            let fine = 50;
+
+            if (
+                truck.speed >
+                limit + 30
+            ) {
+                fine = 150;
+            }
+
+            if (
+                truck.speed >
+                limit + 50
+            ) {
+                fine = 350;
+            }
+
+            money -= fine;
+
+            fines += fine;
+
+            lastFine = now;
+
+            showMessage(
+                "🚓 MULTA -€" +
+                fine
+            );
+        }
+    }
+}
+
+
+// ============================================================
+// TRÁFICO
+// ============================================================
+
+function updateTraffic() {
+
+    for (const car of traffic) {
+
+        car.x +=
+            Math.sin(car.angle) *
+            car.speed;
+
+        car.y -=
+            Math.cos(car.angle) *
+            car.speed;
+
+        if (
+            car.x < 0 ||
+            car.x > WORLD_WIDTH ||
+            car.y < 0 ||
+            car.y > WORLD_HEIGHT
+        ) {
+
+            car.x =
+                Math.random() *
+                WORLD_WIDTH;
+
+            car.y =
+                Math.random() *
+                WORLD_HEIGHT;
+        }
+    }
+}
+
+
+// ============================================================
+// CÁMARA
+// ============================================================
+
+function updateCamera() {
+
+    camera.x +=
+        (truck.x - camera.x) *
+        0.08;
+
+    camera.y +=
+        (truck.y - camera.y) *
+        0.08;
+}
+
+
+// ============================================================
+// COORDENADAS
+// ============================================================
+
+function worldToScreen(x, y) {
 
     return {
 
@@ -1476,20 +1598,78 @@ function worldToScreen(
             y -
             camera.y +
             canvas.height / 2
-
     };
 }
 
 
-// ==========================================================
-// TERRENO
-// ==========================================================
+// ============================================================
+// FONDO
+// ============================================================
+
+let timeOfDay = 12;
+
+let rain = false;
+
+let lightsOn = false;
+
+function updateEnvironment() {
+
+    timeOfDay += 0.002;
+
+    if (timeOfDay >= 24) {
+        timeOfDay = 0;
+    }
+
+    if (
+        Math.random() < 0.00008
+    ) {
+        rain = !rain;
+
+        showMessage(
+            rain ?
+            "🌧️ COMIENZA A LLOVER" :
+            "☀️ DEJA DE LLOVER"
+        );
+    }
+}
+
+
+// ============================================================
+// DIBUJAR FONDO
+// ============================================================
 
 function drawWorld() {
 
-    ctx.fillStyle =
-        "#536d4c";
+    const hour =
+        timeOfDay;
 
+    let brightness = 1;
+
+    if (
+        hour < 7 ||
+        hour > 20
+    ) {
+        brightness = 0.35;
+    }
+
+    if (
+        hour >= 7 &&
+        hour <= 9
+    ) {
+        brightness = 0.65;
+    }
+
+    if (
+        hour >= 18 &&
+        hour <= 20
+    ) {
+        brightness = 0.55;
+    }
+
+    ctx.fillStyle =
+        brightness < 0.5 ?
+        "#17212a" :
+        "#64845a";
 
     ctx.fillRect(
         0,
@@ -1498,227 +1678,84 @@ function drawWorld() {
         canvas.height
     );
 
+    // campos
 
-    const grid =
-        120;
-
-
-    ctx.strokeStyle =
-        "rgba(255,255,255,0.025)";
-
-    ctx.lineWidth =
-        1;
-
+    ctx.globalAlpha = 0.15;
 
     for (
-        let x = -grid;
-        x < canvas.width + grid;
-        x += grid
+        let x = 0;
+        x < canvas.width;
+        x += 100
     ) {
 
-        ctx.beginPath();
+        for (
+            let y = 0;
+            y < canvas.height;
+            y += 100
+        ) {
 
-        ctx.moveTo(
-            x,
-            0
-        );
+            ctx.fillStyle =
+                "#8fa66e";
 
-        ctx.lineTo(
-            x,
-            canvas.height
-        );
-
-        ctx.stroke();
+            ctx.fillRect(
+                x,
+                y,
+                50,
+                50
+            );
+        }
     }
 
-
-    for (
-        let y = -grid;
-        y < canvas.height + grid;
-        y += grid
-    ) {
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            0,
-            y
-        );
-
-        ctx.lineTo(
-            canvas.width,
-            y
-        );
-
-        ctx.stroke();
-    }
+    ctx.globalAlpha = 1;
 }
 
 
-// ==========================================================
-// COLOR DE CARRETERA
-// ==========================================================
+// ============================================================
+// DIBUJAR CARRETERAS
+// ============================================================
 
-function roadColor(
-    type
-) {
+function drawRoads() {
 
-    if (
-        type === "autopista"
-    ) {
+    for (const road of roads) {
 
-        return "#27292d";
-    }
+        const points =
+            road.points.map(
+                p =>
+                    worldToScreen(
+                        p.x,
+                        p.y
+                    )
+            );
 
+        if (points.length < 2) {
+            continue;
+        }
 
-    if (
-        type === "autovia"
-    ) {
+        // carretera
 
-        return "#303237";
-    }
+        ctx.strokeStyle =
+            road.type === "autopista"
+                ? "#343434"
+                : road.type === "autovia"
+                ? "#3e3e3e"
+                : road.type === "nacional"
+                ? "#484848"
+                : road.type === "secundaria"
+                ? "#555"
+                : "#666";
 
+        ctx.lineWidth =
+            road.width;
 
-    if (
-        type === "nacional"
-    ) {
-
-        return "#46484b";
-    }
-
-
-    if (
-        type === "montana"
-    ) {
-
-        return "#514b45";
-    }
-
-
-    return "#585858";
-}
-
-
-// ==========================================================
-// DIBUJAR CARRETERA
-// ==========================================================
-
-function drawRoad(
-    road
-) {
-
-    const points =
-        road.points.map(
-            function(point) {
-
-                return worldToScreen(
-                    point.x,
-                    point.y
-                );
-            }
-        );
-
-
-    if (
-        points.length < 2
-    ) {
-
-        return;
-    }
-
-
-    ctx.beginPath();
-
-
-    ctx.moveTo(
-        points[0].x,
-        points[0].y
-    );
-
-
-    for (
-        let i = 1;
-        i < points.length;
-        i++
-    ) {
-
-        ctx.lineTo(
-            points[i].x,
-            points[i].y
-        );
-    }
-
-
-    ctx.strokeStyle =
-        roadColor(
-            road.type
-        );
-
-
-    ctx.lineWidth =
-        road.width;
-
-
-    ctx.lineCap =
-        "round";
-
-    ctx.lineJoin =
-        "round";
-
-
-    ctx.stroke();
-
-
-    // ARCENES
-
-    ctx.beginPath();
-
-
-    ctx.moveTo(
-        points[0].x,
-        points[0].y
-    );
-
-
-    for (
-        let i = 1;
-        i < points.length;
-        i++
-    ) {
-
-        ctx.lineTo(
-            points[i].x,
-            points[i].y
-        );
-    }
-
-
-    ctx.strokeStyle =
-        "rgba(255,255,255,0.75)";
-
-
-    ctx.lineWidth =
-        2;
-
-
-    ctx.stroke();
-
-
-    // LINEA CENTRAL
-
-    if (
-        road.type !==
-        "autopista"
-    ) {
+        ctx.lineCap =
+            "round";
 
         ctx.beginPath();
-
 
         ctx.moveTo(
             points[0].x,
             points[0].y
         );
-
 
         for (
             let i = 1;
@@ -1732,54 +1769,64 @@ function drawRoad(
             );
         }
 
-
-        ctx.strokeStyle =
-            "#e5d16a";
-
-
-        ctx.lineWidth =
-            2;
-
-
-        ctx.setLineDash(
-            [18, 15]
-        );
-
-
         ctx.stroke();
 
+        // línea central
+
+        ctx.strokeStyle =
+            "#e7d36b";
+
+        ctx.lineWidth = 3;
+
+        if (
+            road.type === "autopista" ||
+            road.type === "autovia"
+        ) {
+
+            ctx.setLineDash(
+                [25, 18]
+            );
+
+        } else {
+
+            ctx.setLineDash(
+                [15, 15]
+            );
+        }
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            points[0].x,
+            points[0].y
+        );
+
+        for (
+            let i = 1;
+            i < points.length;
+            i++
+        ) {
+
+            ctx.lineTo(
+                points[i].x,
+                points[i].y
+            );
+        }
+
+        ctx.stroke();
 
         ctx.setLineDash([]);
     }
 }
 
 
-// ==========================================================
-// TODAS LAS CARRETERAS
-// ==========================================================
-
-function drawRoads() {
-
-    for (
-        const road of roads
-    ) {
-
-        drawRoad(
-            road
-        );
-    }
-}
-
-
-// ==========================================================
+// ============================================================
 // CIUDADES
-// ==========================================================
+// ============================================================
 
 function drawCities() {
 
-    for (
-        const city of cities
-    ) {
+    for (const city of cities) {
 
         const p =
             worldToScreen(
@@ -1787,87 +1834,65 @@ function drawCities() {
                 city.y
             );
 
+        if (
+            p.x < -400 ||
+            p.x > canvas.width + 400 ||
+            p.y < -400 ||
+            p.y > canvas.height + 400
+        ) {
+            continue;
+        }
 
         ctx.fillStyle =
-            "rgba(90,90,90,0.25)";
-
+            "rgba(45,45,45,0.8)";
 
         ctx.beginPath();
 
         ctx.arc(
             p.x,
             p.y,
-            city.size * 0.35,
+            Math.max(
+                8,
+                city.size / 10
+            ),
             0,
             Math.PI * 2
         );
 
         ctx.fill();
 
-
         ctx.fillStyle =
-            "#e8e8e8";
-
-
-        ctx.beginPath();
-
-        ctx.arc(
-            p.x,
-            p.y,
-            7,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-
-        ctx.fillStyle =
-            "#ffffff";
-
+            "#fff";
 
         ctx.font =
-            "bold 18px Arial";
-
+            "bold 17px Arial";
 
         ctx.textAlign =
             "center";
-
-
-        ctx.shadowColor =
-            "#000";
-
-        ctx.shadowBlur =
-            5;
-
 
         ctx.fillText(
             city.name,
             p.x,
             p.y -
-            city.size * 0.35
+            Math.max(
+                15,
+                city.size / 10
+            )
         );
-
-
-        ctx.shadowBlur =
-            0;
     }
-
 
     ctx.textAlign =
         "left";
 }
 
 
-// ==========================================================
+// ============================================================
 // PUEBLOS
-// ==========================================================
+// ============================================================
 
 function drawVillages() {
 
-    for (
-        const village of villages
-    ) {
+    for (const village of villages) {
 
         const p =
             worldToScreen(
@@ -1875,65 +1900,52 @@ function drawVillages() {
                 village.y
             );
 
+        if (
+            p.x < -100 ||
+            p.x > canvas.width + 100 ||
+            p.y < -100 ||
+            p.y > canvas.height + 100
+        ) {
+            continue;
+        }
 
         ctx.fillStyle =
-            "#d8c58a";
-
+            "#dedede";
 
         ctx.beginPath();
 
         ctx.arc(
             p.x,
             p.y,
-            4,
+            5,
             0,
             Math.PI * 2
         );
 
         ctx.fill();
 
-
         ctx.fillStyle =
             "#fff";
 
-
         ctx.font =
             "13px Arial";
-
-
-        ctx.textAlign =
-            "left";
-
-
-        ctx.shadowColor =
-            "#000";
-
-        ctx.shadowBlur =
-            4;
-
 
         ctx.fillText(
             village.name,
             p.x + 8,
             p.y + 4
         );
-
-
-        ctx.shadowBlur =
-            0;
     }
 }
 
 
-// ==========================================================
-// PUNTOS DE INTERÉS
-// ==========================================================
+// ============================================================
+// POI
+// ============================================================
 
 function drawPOIs() {
 
-    for (
-        const poi of pointsOfInterest
-    ) {
+    for (const poi of pois) {
 
         const p =
             worldToScreen(
@@ -1941,207 +1953,244 @@ function drawPOIs() {
                 poi.y
             );
 
+        let symbol = "●";
 
-        let symbol =
-            "•";
-
-
-        if (
-            poi.type ===
-            "gasolinera"
-        ) {
-
-            symbol =
-                "⛽";
+        if (poi.type === "gasolinera") {
+            symbol = "⛽";
         }
 
-
-        if (
-            poi.type ===
-            "taller"
-        ) {
-
-            symbol =
-                "🔧";
+        if (poi.type === "taller") {
+            symbol = "🔧";
         }
 
-
-        if (
-            poi.type ===
-            "descanso"
-        ) {
-
-            symbol =
-                "P";
+        if (poi.type === "descanso") {
+            symbol = "🅿";
         }
-
 
         ctx.font =
-            "20px Arial";
-
-
-        ctx.textAlign =
-            "center";
-
+            "18px Arial";
 
         ctx.fillStyle =
-            "#ffffff";
-
+            "#fff";
 
         ctx.fillText(
             symbol,
+            p.x - 8,
+            p.y
+        );
+    }
+}
+
+
+// ============================================================
+// TRÁFICO EN PANTALLA
+// ============================================================
+
+function drawTraffic() {
+
+    for (const car of traffic) {
+
+        const p =
+            worldToScreen(
+                car.x,
+                car.y
+            );
+
+        if (
+            p.x < -50 ||
+            p.x > canvas.width + 50 ||
+            p.y < -50 ||
+            p.y > canvas.height + 50
+        ) {
+            continue;
+        }
+
+        ctx.save();
+
+        ctx.translate(
             p.x,
             p.y
         );
 
+        ctx.rotate(
+            car.angle
+        );
 
-        ctx.font =
-            "11px Arial";
+        ctx.fillStyle =
+            car.color;
 
+        ctx.fillRect(
+            -8,
+            -16,
+            16,
+            32
+        );
 
         ctx.fillStyle =
             "#fff";
 
-
-        ctx.shadowColor =
-            "#000";
-
-        ctx.shadowBlur =
-            4;
-
-
-        ctx.fillText(
-            poi.name,
-            p.x,
-            p.y + 20
+        ctx.fillRect(
+            -6,
+            -13,
+            12,
+            7
         );
 
-
-        ctx.shadowBlur =
-            0;
+        ctx.restore();
     }
-
-
-    ctx.textAlign =
-        "left";
 }
 
 
-// ==========================================================
-// SEÑALES
-// ==========================================================
+// ============================================================
+// CAMIÓN
+// ============================================================
 
-function drawSigns() {
+function drawTruck() {
 
-    for (
-        const road of roads
-    ) {
-
-        if (
-            road.points.length <
-            2
-        ) {
-
-            continue;
-        }
-
-
-        const p =
-            road.points[1];
-
-
-        const screen =
-            worldToScreen(
-                p.x,
-                p.y
-            );
-
-
-        if (
-            screen.x < -100 ||
-            screen.x >
-                canvas.width + 100 ||
-            screen.y < -100 ||
-            screen.y >
-                canvas.height + 100
-        ) {
-
-            continue;
-        }
-
-
-        ctx.fillStyle =
-            "#888";
-
-
-        ctx.fillRect(
-            screen.x - 2,
-            screen.y,
-            4,
-            30
+    const p =
+        worldToScreen(
+            truck.x,
+            truck.y
         );
 
+    ctx.save();
+
+    ctx.translate(
+        p.x,
+        p.y
+    );
+
+    ctx.rotate(
+        truck.angle
+    );
+
+    // sombra
+
+    ctx.fillStyle =
+        "rgba(0,0,0,0.3)";
+
+    ctx.fillRect(
+        -30,
+        -42,
+        60,
+        90
+    );
+
+    // remolque
+
+    if (cargo.loaded) {
 
         ctx.fillStyle =
-            "#1765b0";
-
+            "#d7d7d7";
 
         ctx.fillRect(
-            screen.x - 20,
-            screen.y - 25,
-            40,
-            25
-        );
-
-
-        ctx.fillStyle =
-            "#fff";
-
-
-        ctx.font =
-            "bold 10px Arial";
-
-
-        ctx.textAlign =
-            "center";
-
-
-        ctx.fillText(
-            road.name,
-            screen.x,
-            screen.y - 9
+            -24,
+            15,
+            48,
+            55
         );
     }
 
+    // cabina
 
-    ctx.textAlign =
-        "left";
+    ctx.fillStyle =
+        "#174c78";
+
+    ctx.fillRect(
+        -27,
+        -50,
+        54,
+        60
+    );
+
+    // cristal
+
+    ctx.fillStyle =
+        "#7fc4df";
+
+    ctx.fillRect(
+        -20,
+        -43,
+        40,
+        22
+    );
+
+    // ruedas
+
+    ctx.fillStyle =
+        "#111";
+
+    ctx.fillRect(
+        -35,
+        -40,
+        9,
+        22
+    );
+
+    ctx.fillRect(
+        26,
+        -40,
+        9,
+        22
+    );
+
+    ctx.fillRect(
+        -35,
+        35,
+        9,
+        22
+    );
+
+    ctx.fillRect(
+        26,
+        35,
+        9,
+        22
+    );
+
+    // faros
+
+    if (lightsOn) {
+
+        ctx.fillStyle =
+            "#fff5a5";
+
+        ctx.fillRect(
+            -18,
+            -53,
+            12,
+            7
+        );
+
+        ctx.fillRect(
+            6,
+            -53,
+            12,
+            7
+        );
+    }
+
+    ctx.restore();
 }
 
 
-// ==========================================================
+// ============================================================
 // MINIMAPA
-// ==========================================================
+// ============================================================
 
 function drawMinimap() {
 
-    const size =
-        230;
-
+    const size = 230;
 
     const x =
         canvas.width -
         size -
         20;
 
-
-    const y =
-        20;
-
+    const y = 20;
 
     ctx.fillStyle =
-        "rgba(5,10,12,0.88)";
-
+        "rgba(10,15,20,0.9)";
 
     ctx.fillRect(
         x,
@@ -2150,10 +2199,8 @@ function drawMinimap() {
         size
     );
 
-
     ctx.strokeStyle =
-        "rgba(255,255,255,0.25)";
-
+        "#777";
 
     ctx.strokeRect(
         x,
@@ -2162,130 +2209,67 @@ function drawMinimap() {
         size
     );
 
-
-    const scaleX =
+    const sx =
         size /
         WORLD_WIDTH;
 
-
-    const scaleY =
+    const sy =
         size /
         WORLD_HEIGHT;
 
+    // carreteras
 
-    for (
-        const road of roads
-    ) {
+    for (const road of roads) {
 
         ctx.beginPath();
 
+        for (
+            let i = 0;
+            i < road.points.length;
+            i++
+        ) {
 
-        road.points.forEach(
-            function(point, index) {
+            const px =
+                x +
+                road.points[i].x *
+                sx;
 
-                const px =
-                    x +
-                    point.x *
-                    scaleX;
+            const py =
+                y +
+                road.points[i].y *
+                sy;
 
-
-                const py =
-                    y +
-                    point.y *
-                    scaleY;
-
-
-                if (
-                    index === 0
-                ) {
-
-                    ctx.moveTo(
-                        px,
-                        py
-                    );
-
-                } else {
-
-                    ctx.lineTo(
-                        px,
-                        py
-                    );
-                }
+            if (i === 0) {
+                ctx.moveTo(px, py);
+            } else {
+                ctx.lineTo(px, py);
             }
-        );
-
-
-        if (
-            road.type ===
-            "autopista"
-        ) {
-
-            ctx.strokeStyle =
-                "#ffffff";
-
-        } else if (
-            road.type ===
-            "autovia"
-        ) {
-
-            ctx.strokeStyle =
-                "#f1c84b";
-
-        } else if (
-            road.type ===
-            "nacional"
-        ) {
-
-            ctx.strokeStyle =
-                "#df8b40";
-
-        } else {
-
-            ctx.strokeStyle =
-                "#aaa";
         }
 
+        ctx.strokeStyle =
+            "#777";
 
-        ctx.lineWidth =
-            road.type ===
-            "autopista"
-                ? 3
-                : 2;
-
+        ctx.lineWidth = 2;
 
         ctx.stroke();
     }
 
+    // ciudades
 
-    // CIUDADES
-
-    ctx.font =
-        "bold 8px Arial";
-
-
-    ctx.textAlign =
-        "left";
-
-
-    for (
-        const city of cities
-    ) {
+    for (const city of cities) {
 
         const px =
             x +
             city.x *
-            scaleX;
-
+            sx;
 
         const py =
             y +
             city.y *
-            scaleY;
-
+            sy;
 
         ctx.fillStyle =
             "#fff";
-
 
         ctx.beginPath();
 
@@ -2298,33 +2282,74 @@ function drawMinimap() {
         );
 
         ctx.fill();
-
-
-        ctx.fillText(
-            city.name,
-            px + 5,
-            py - 4
-        );
     }
 
+    // destino
 
-    // CAMION
+    if (
+        job.active &&
+        job.destination
+    ) {
+
+        const dx =
+            x +
+            job.destination.x *
+            sx;
+
+        const dy =
+            y +
+            job.destination.y *
+            sy;
+
+        ctx.fillStyle =
+            "#00e5ff";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            dx,
+            dy,
+            6,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle =
+            "#00e5ff";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x +
+            truck.x * sx,
+            y +
+            truck.y * sy
+        );
+
+        ctx.lineTo(
+            dx,
+            dy
+        );
+
+        ctx.stroke();
+    }
+
+    // camión
 
     const tx =
         x +
         truck.x *
-        scaleX;
-
+        sx;
 
     const ty =
         y +
         truck.y *
-        scaleY;
-
+        sy;
 
     ctx.fillStyle =
         "#ff3030";
-
 
     ctx.beginPath();
 
@@ -2338,1486 +2363,28 @@ function drawMinimap() {
 
     ctx.fill();
 
-
     ctx.fillStyle =
         "#fff";
 
-
     ctx.font =
-        "bold 11px Arial";
-
+        "11px Arial";
 
     ctx.fillText(
-        "MINIMAPA",
-        x + 10,
-        y + 18
-    );
-}
-// ==========================================================
-// FASE 3
-// TRÁFICO
-// ==========================================================
-
-const traffic = [];
-
-const trafficTypes = [
-    "car",
-    "van",
-    "truck",
-    "bus"
-];
-
-
-function randomTrafficType() {
-
-    return trafficTypes[
-        Math.floor(
-            Math.random() *
-            trafficTypes.length
-        )
-    ];
-}
-
-
-// ==========================================================
-// CREAR VEHÍCULO
-// ==========================================================
-
-function createTrafficVehicle(
-    road,
-    roadIndex,
-    pointIndex
-) {
-
-    const points =
-        road.points;
-
-
-    if (
-        points.length < 2
-    ) {
-
-        return;
-    }
-
-
-    const safeIndex =
-        Math.min(
-            pointIndex,
-            points.length - 2
-        );
-
-
-    const start =
-        points[safeIndex];
-
-
-    const end =
-        points[safeIndex + 1];
-
-
-    const angle =
-        Math.atan2(
-            end.x - start.x,
-            -(end.y - start.y)
-        );
-
-
-    const type =
-        randomTrafficType();
-
-
-    let speed =
-        35 +
-        Math.random() * 55;
-
-
-    if (
-        road.type ===
-        "autopista"
-    ) {
-
-        speed =
-            70 +
-            Math.random() * 45;
-    }
-
-
-    if (
-        road.type ===
-        "secundaria"
-    ) {
-
-        speed =
-            25 +
-            Math.random() * 35;
-    }
-
-
-    traffic.push({
-
-        x:
-            start.x,
-
-        y:
-            start.y,
-
-        angle:
-            angle,
-
-        speed:
-            speed,
-
-        maxSpeed:
-            speed,
-
-        type:
-            type,
-
-        roadIndex:
-            roadIndex,
-
-        pointIndex:
-            safeIndex,
-
-        progress:
-            0,
-
-        length:
-            type === "truck"
-                ? 70
-                : 45,
-
-        width:
-            type === "truck"
-                ? 24
-                : 20,
-
-        stopped:
-            false,
-
-        color:
-            randomVehicleColor()
-
-    });
-}
-
-
-// ==========================================================
-// COLORES DE TRÁFICO
-// ==========================================================
-
-function randomVehicleColor() {
-
-    const colors = [
-        "#e53935",
-        "#eeeeee",
-        "#1976d2",
-        "#fbc02d",
-        "#43a047",
-        "#8e24aa",
-        "#424242",
-        "#fb8c00"
-    ];
-
-
-    return colors[
-        Math.floor(
-            Math.random() *
-            colors.length
-        )
-    ];
-}
-
-
-// ==========================================================
-// CREAR TRÁFICO INICIAL
-// ==========================================================
-
-function spawnInitialTraffic() {
-
-    traffic.length =
-        0;
-
-
-    for (
-        let i = 0;
-        i < roads.length;
-        i++
-    ) {
-
-        const road =
-            roads[i];
-
-
-        const amount =
-            road.type ===
-            "autopista"
-                ? 5
-                : 3;
-
-
-        for (
-            let j = 0;
-            j < amount;
-            j++
-        ) {
-
-            createTrafficVehicle(
-                road,
-                i,
-                Math.floor(
-                    Math.random() *
-                    Math.max(
-                        1,
-                        road.points.length - 1
-                    )
-                )
-            );
-        }
-    }
-}
-
-
-spawnInitialTraffic();
-
-
-// ==========================================================
-// SEMÁFOROS
-// ==========================================================
-
-const trafficLights = [];
-
-
-function createTrafficLight(
-    x,
-    y
-) {
-
-    trafficLights.push({
-
-        x:
-            x,
-
-        y:
-            y,
-
-        state:
-            "green",
-
-        timer:
-            Math.random() * 8,
-
-        duration:
-            8
-
-    });
-}
-
-
-function buildTrafficLights() {
-
-    trafficLights.length =
-        0;
-
-
-    createTrafficLight(
-        5000,
-        3750
-    );
-
-
-    createTrafficLight(
-        6000,
-        3900
-    );
-
-
-    createTrafficLight(
-        3900,
-        4700
-    );
-
-
-    createTrafficLight(
-        6500,
-        3300
-    );
-
-
-    createTrafficLight(
-        7900,
-        3900
+        "MAPA",
+        x + 8,
+        y + 15
     );
 }
 
 
-buildTrafficLights();
-
-
-// ==========================================================
-// ACTUALIZAR SEMÁFOROS
-// ==========================================================
-
-function updateTrafficLights(
-    delta
-) {
-
-    for (
-        const light of trafficLights
-    ) {
-
-        light.timer +=
-            delta;
-
-
-        if (
-            light.timer >=
-            light.duration
-        ) {
-
-            light.timer =
-                0;
-
-
-            if (
-                light.state ===
-                "green"
-            ) {
-
-                light.state =
-                    "yellow";
-
-                light.duration =
-                    2;
-
-            } else if (
-                light.state ===
-                "yellow"
-            ) {
-
-                light.state =
-                    "red";
-
-                light.duration =
-                    7;
-
-            } else {
-
-                light.state =
-                    "green";
-
-                light.duration =
-                    8;
-            }
-        }
-    }
-}
-
-
-// ==========================================================
-// DIBUJAR SEMÁFOROS
-// ==========================================================
-
-function drawTrafficLights() {
-
-    for (
-        const light of trafficLights
-    ) {
-
-        const p =
-            worldToScreen(
-                light.x,
-                light.y
-            );
-
-
-        ctx.fillStyle =
-            "#222";
-
-
-        ctx.fillRect(
-            p.x - 9,
-            p.y - 27,
-            18,
-            40
-        );
-
-
-        let red =
-            "#441111";
-
-        let yellow =
-            "#443d11";
-
-        let green =
-            "#114411";
-
-
-        if (
-            light.state ===
-            "red"
-        ) {
-
-            red =
-                "#ff2222";
-        }
-
-
-        if (
-            light.state ===
-            "yellow"
-        ) {
-
-            yellow =
-                "#ffd21f";
-        }
-
-
-        if (
-            light.state ===
-            "green"
-        ) {
-
-            green =
-                "#20e85a";
-        }
-
-
-        ctx.fillStyle =
-            red;
-
-        ctx.beginPath();
-
-        ctx.arc(
-            p.x,
-            p.y - 18,
-            5,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-
-        ctx.fillStyle =
-            yellow;
-
-        ctx.beginPath();
-
-        ctx.arc(
-            p.x,
-            p.y - 4,
-            5,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-
-        ctx.fillStyle =
-            green;
-
-        ctx.beginPath();
-
-        ctx.arc(
-            p.x,
-            p.y + 10,
-            5,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-    }
-}
-
-
-// ==========================================================
-// DISTANCIA A SEMÁFORO
-// ==========================================================
-
-function isNearRedLight(
-    vehicle
-) {
-
-    for (
-        const light of trafficLights
-    ) {
-
-        const d =
-            distance(
-                vehicle.x,
-                vehicle.y,
-                light.x,
-                light.y
-            );
-
-
-        if (
-            d < 75 &&
-            light.state ===
-            "red"
-        ) {
-
-            return true;
-        }
-    }
-
-
-    return false;
-}
-
-
-// ==========================================================
-// MOVIMIENTO DEL TRÁFICO
-// ==========================================================
-
-function updateTraffic(
-    delta
-) {
-
-    for (
-        const vehicle of traffic
-    ) {
-
-        if (
-            isNearRedLight(
-                vehicle
-            )
-        ) {
-
-            vehicle.speed *=
-                0.90;
-
-
-            if (
-                vehicle.speed < 2
-            ) {
-
-                vehicle.speed =
-                    0;
-            }
-
-
-            vehicle.stopped =
-                true;
-
-
-            continue;
-        }
-
-
-        vehicle.stopped =
-            false;
-
-
-        const road =
-            roads[
-                vehicle.roadIndex
-            ];
-
-
-        if (!road) {
-
-            continue;
-        }
-
-
-        const points =
-            road.points;
-
-
-        const index =
-            vehicle.pointIndex;
-
-
-        if (
-            index >=
-            points.length - 1
-        ) {
-
-            vehicle.pointIndex =
-                0;
-
-            vehicle.progress =
-                0;
-
-            continue;
-        }
-
-
-        const start =
-            points[index];
-
-
-        const end =
-            points[index + 1];
-
-
-        const dx =
-            end.x -
-            start.x;
-
-
-        const dy =
-            end.y -
-            start.y;
-
-
-        const segmentLength =
-            Math.hypot(
-                dx,
-                dy
-            );
-
-
-        if (
-            segmentLength <= 0
-        ) {
-
-            continue;
-        }
-
-
-        vehicle.progress +=
-            (
-                vehicle.speed *
-                delta
-            ) /
-            segmentLength;
-
-
-        while (
-            vehicle.progress >= 1
-        ) {
-
-            vehicle.progress -=
-                1;
-
-
-            vehicle.pointIndex++;
-
-
-            if (
-                vehicle.pointIndex >=
-                points.length - 1
-            ) {
-
-                vehicle.pointIndex =
-                    0;
-
-                vehicle.progress =
-                    0;
-
-                break;
-            }
-        }
-
-
-        const current =
-            points[
-                vehicle.pointIndex
-            ];
-
-
-        const next =
-            points[
-                vehicle.pointIndex + 1
-            ];
-
-
-        vehicle.x =
-            current.x +
-            (
-                next.x -
-                current.x
-            ) *
-            vehicle.progress;
-
-
-        vehicle.y =
-            current.y +
-            (
-                next.y -
-                current.y
-            ) *
-            vehicle.progress;
-
-
-        vehicle.angle =
-            Math.atan2(
-                next.x -
-                current.x,
-                -(
-                    next.y -
-                    current.y
-                )
-            );
-    }
-}
-
-
-// ==========================================================
-// COLISIONES CON TRÁFICO
-// ==========================================================
-
-function checkTrafficCollisions() {
-
-    for (
-        const vehicle of traffic
-    ) {
-
-        const d =
-            distance(
-                truck.x,
-                truck.y,
-                vehicle.x,
-                vehicle.y
-            );
-
-
-        if (
-            d <
-            55
-        ) {
-
-            registerDamage(
-                0.35
-            );
-
-
-            truck.speed *=
-                0.72;
-
-
-            vehicle.speed *=
-                0.55;
-
-
-            showMessage(
-                "⚠ COLISION CON TRAFICO"
-            );
-        }
-    }
-}
-
-
-// ==========================================================
-// DIBUJAR VEHÍCULO
-// ==========================================================
-
-function drawTrafficVehicle(
-    vehicle
-) {
-
-    const p =
-        worldToScreen(
-            vehicle.x,
-            vehicle.y
-        );
-
-
-    if (
-        p.x < -100 ||
-        p.x >
-            canvas.width + 100 ||
-        p.y < -150 ||
-        p.y >
-            canvas.height + 150
-    ) {
-
-        return;
-    }
-
-
-    ctx.save();
-
-
-    ctx.translate(
-        p.x,
-        p.y
-    );
-
-
-    ctx.rotate(
-        vehicle.angle
-    );
-
-
-    // SOMBRA
-
-    ctx.fillStyle =
-        "rgba(0,0,0,0.35)";
-
-
-    ctx.fillRect(
-        -vehicle.width / 2 - 3,
-        -vehicle.length / 2 + 4,
-        vehicle.width + 6,
-        vehicle.length
-    );
-
-
-    // CUERPO
-
-    ctx.fillStyle =
-        vehicle.color;
-
-
-    ctx.fillRect(
-        -vehicle.width / 2,
-        -vehicle.length / 2,
-        vehicle.width,
-        vehicle.length
-    );
-
-
-    // CRISTALES
-
-    ctx.fillStyle =
-        "#6d9db3";
-
-
-    ctx.fillRect(
-        -vehicle.width / 2 + 3,
-        -vehicle.length / 2 + 6,
-        vehicle.width - 6,
-        vehicle.length * 0.28
-    );
-
-
-    // RUEDAS
-
-    ctx.fillStyle =
-        "#111";
-
-
-    ctx.fillRect(
-        -vehicle.width / 2 - 3,
-        -vehicle.length / 2 + 8,
-        4,
-        16
-    );
-
-
-    ctx.fillRect(
-        vehicle.width / 2 - 1,
-        -vehicle.length / 2 + 8,
-        4,
-        16
-    );
-
-
-    ctx.fillRect(
-        -vehicle.width / 2 - 3,
-        vehicle.length / 2 - 24,
-        4,
-        16
-    );
-
-
-    ctx.fillRect(
-        vehicle.width / 2 - 1,
-        vehicle.length / 2 - 24,
-        4,
-        16
-    );
-
-
-    // FAROS
-
-    ctx.fillStyle =
-        "#fff3a6";
-
-
-    ctx.fillRect(
-        -vehicle.width / 2 + 3,
-        -vehicle.length / 2 - 2,
-        6,
-        4
-    );
-
-
-    ctx.fillRect(
-        vehicle.width / 2 - 9,
-        -vehicle.length / 2 - 2,
-        6,
-        4
-    );
-
-
-    ctx.restore();
-}
-
-
-// ==========================================================
-// DIBUJAR TODO EL TRÁFICO
-// ==========================================================
-
-function drawTraffic() {
-
-    for (
-        const vehicle of traffic
-    ) {
-
-        drawTrafficVehicle(
-            vehicle
-        );
-    }
-}
-
-
-// ==========================================================
-// LUCES
-// ==========================================================
-
-let lightsOn =
-    false;
-
-
-function toggleLights() {
-
-    lightsOn =
-        !lightsOn;
-
-
-    showMessage(
-        lightsOn
-            ? "💡 LUCES ENCENDIDAS"
-            : "💡 LUCES APAGADAS"
-    );
-}
-
-
-// ==========================================================
-// CICLO DÍA / NOCHE
-// ==========================================================
-
-let worldTime =
-    12;
-
-
-const DAY_SPEED =
-    0.018;
-
-
-function updateDayNight(
-    delta
-) {
-
-    worldTime +=
-        DAY_SPEED *
-        delta *
-        60;
-
-
-    if (
-        worldTime >= 24
-    ) {
-
-        worldTime -=
-            24;
-    }
-}
-
-
-function getNightAmount() {
-
-    if (
-        worldTime >= 7 &&
-        worldTime <= 19
-    ) {
-
-        return 0;
-    }
-
-
-    if (
-        worldTime > 19 &&
-        worldTime < 21
-    ) {
-
-        return (
-            worldTime -
-            19
-        ) /
-        2;
-    }
-
-
-    if (
-        worldTime >= 5 &&
-        worldTime < 7
-    ) {
-
-        return (
-            7 -
-            worldTime
-        ) /
-        2;
-    }
-
-
-    return 0.78;
-}
-
-
-// ==========================================================
-// CLIMA
-// ==========================================================
-
-let weather =
-    "despejado";
-
-
-let weatherTimer =
-    0;
-
-
-const weatherTypes = [
-    "despejado",
-    "nublado",
-    "lluvia"
-];
-
-
-function updateWeather(
-    delta
-) {
-
-    weatherTimer +=
-        delta;
-
-
-    if (
-        weatherTimer >
-        35
-    ) {
-
-        weatherTimer =
-            0;
-
-
-        const index =
-            Math.floor(
-                Math.random() *
-                weatherTypes.length
-            );
-
-
-        weather =
-            weatherTypes[
-                index
-            ];
-
-
-        showMessage(
-            "TIEMPO: " +
-            weather.toUpperCase()
-        );
-    }
-}
-
-
-// ==========================================================
-// LLUVIA
-// ==========================================================
-
-const rainDrops = [];
-
-
-function createRain() {
-
-    rainDrops.length =
-        0;
-
-
-    for (
-        let i = 0;
-        i < 180;
-        i++
-    ) {
-
-        rainDrops.push({
-
-            x:
-                Math.random() *
-                canvas.width,
-
-            y:
-                Math.random() *
-                canvas.height,
-
-            speed:
-                450 +
-                Math.random() *
-                300
-
-        });
-    }
-}
-
-
-createRain();
-
-
-function updateRain(
-    delta
-) {
-
-    if (
-        weather !==
-        "lluvia"
-    ) {
-
-        return;
-    }
-
-
-    for (
-        const drop of rainDrops
-    ) {
-
-        drop.y +=
-            drop.speed *
-            delta;
-
-
-        if (
-            drop.y >
-            canvas.height
-        ) {
-
-            drop.y =
-                -20;
-
-            drop.x =
-                Math.random() *
-                canvas.width;
-        }
-    }
-}
-
-
-function drawRain() {
-
-    if (
-        weather !==
-        "lluvia"
-    ) {
-
-        return;
-    }
-
-
-    ctx.strokeStyle =
-        "rgba(180,210,255,0.35)";
-
-
-    ctx.lineWidth =
-        1;
-
-
-    for (
-        const drop of rainDrops
-    ) {
-
-        ctx.beginPath();
-
-
-        ctx.moveTo(
-            drop.x,
-            drop.y
-        );
-
-
-        ctx.lineTo(
-            drop.x - 5,
-            drop.y + 18
-        );
-
-
-        ctx.stroke();
-    }
-}
-
-
-// ==========================================================
-// NUBES
-// ==========================================================
-
-function drawClouds() {
-
-    if (
-        weather !==
-        "nublado"
-        &&
-        weather !==
-        "lluvia"
-    ) {
-
-        return;
-    }
-
-
-    ctx.fillStyle =
-        "rgba(180,190,195,0.18)";
-
-
-    for (
-        let i = 0;
-        i < 8;
-        i++
-    ) {
-
-        const x =
-            (
-                i * 230 +
-                worldTime * 8
-            )
-            %
-            (
-                canvas.width +
-                300
-            ) -
-            150;
-
-
-        const y =
-            50 +
-            (
-                i %
-                4
-            ) *
-            90;
-
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-            x,
-            y,
-            45,
-            0,
-            Math.PI * 2
-        );
-
-
-        ctx.arc(
-            x + 40,
-            y - 12,
-            55,
-            0,
-            Math.PI * 2
-        );
-
-
-        ctx.arc(
-            x + 90,
-            y,
-            40,
-            0,
-            Math.PI * 2
-        );
-
-
-        ctx.fill();
-    }
-}
-
-
-// ==========================================================
-// EFECTO DÍA/NOCHE
-// ==========================================================
-
-function drawNightOverlay() {
-
-    const amount =
-        getNightAmount();
-
-
-    if (
-        amount <= 0
-    ) {
-
-        return;
-    }
-
-
-    ctx.fillStyle =
-        "rgba(5,12,35," +
-        (
-            amount *
-            0.68
-        ) +
-        ")";
-
-
-    ctx.fillRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-}
-
-
-// ==========================================================
-// LUCES DEL CAMIÓN
-// ==========================================================
-
-function drawTruckLights() {
-
-    if (
-        !lightsOn
-    ) {
-
-        return;
-    }
-
-
-    if (
-        getNightAmount() <= 0
-    ) {
-
-        return;
-    }
-
-
-    const p =
-        worldToScreen(
-            truck.x,
-            truck.y
-        );
-
-
-    ctx.save();
-
-
-    ctx.translate(
-        p.x,
-        p.y
-    );
-
-
-    ctx.rotate(
-        truck.angle
-    );
-
-
-    const gradient =
-        ctx.createRadialGradient(
-            0,
-            -80,
-            5,
-            0,
-            -100,
-            140
-        );
-
-
-    gradient.addColorStop(
-        0,
-        "rgba(255,250,190,0.38)"
-    );
-
-
-    gradient.addColorStop(
-        1,
-        "rgba(255,250,190,0)"
-    );
-
-
-    ctx.fillStyle =
-        gradient;
-
-
-    ctx.beginPath();
-
-
-    ctx.moveTo(
-        -18,
-        -70
-    );
-
-
-    ctx.lineTo(
-        -130,
-        -230
-    );
-
-
-    ctx.lineTo(
-        130,
-        -230
-    );
-
-
-    ctx.lineTo(
-        18,
-        -70
-    );
-
-
-    ctx.closePath();
-
-
-    ctx.fill();
-
-
-    ctx.restore();
-}
-
-
-// ==========================================================
-// TIEMPO EN HUD
-// ==========================================================
-
-function formatTime() {
-
-    const hours =
-        Math.floor(
-            worldTime
-        );
-
-
-    const minutes =
-        Math.floor(
-            (
-                worldTime -
-                hours
-            ) *
-            60
-        );
-
-
-    return (
-        String(hours)
-            .padStart(2, "0")
-        +
-        ":" +
-        String(minutes)
-            .padStart(2, "0")
-    );
-}
-// ==========================================================
+// ============================================================
 // MAPA COMPLETO
-// ==========================================================
+// ============================================================
 
 function drawFullMap() {
 
-    if (!fullMap) {
-
-        return;
-    }
-
-
     ctx.fillStyle =
-        "rgba(5,8,10,0.94)";
-
+        "#17251a";
 
     ctx.fillRect(
         0,
@@ -3826,869 +2393,564 @@ function drawFullMap() {
         canvas.height
     );
 
+    const scale =
+        Math.min(
+            canvas.width /
+                WORLD_WIDTH,
+            canvas.height /
+                WORLD_HEIGHT
+        ) *
+        0.88;
 
-    const margin =
-        50;
+    const offsetX =
+        (
+            canvas.width -
+            WORLD_WIDTH * scale
+        ) / 2;
 
+    const offsetY =
+        (
+            canvas.height -
+            WORLD_HEIGHT * scale
+        ) / 2;
 
-    const mapWidth =
-        canvas.width -
-        margin * 2;
+    function mapPoint(x, y) {
 
+        return {
 
-    const mapHeight =
-        canvas.height -
-        margin * 2;
+            x:
+                offsetX +
+                x * scale,
 
+            y:
+                offsetY +
+                y * scale
+        };
+    }
 
-    const scaleX =
-        mapWidth /
-        WORLD_WIDTH;
+    // carreteras
 
-
-    const scaleY =
-        mapHeight /
-        WORLD_HEIGHT;
-
-
-    // CARRETERAS
-
-    for (
-        const road of roads
-    ) {
+    for (const road of roads) {
 
         ctx.beginPath();
 
+        for (
+            let i = 0;
+            i < road.points.length;
+            i++
+        ) {
 
-        road.points.forEach(
-            function(point, index) {
+            const p =
+                mapPoint(
+                    road.points[i].x,
+                    road.points[i].y
+                );
 
-                const px =
-                    margin +
-                    point.x *
-                    scaleX;
-
-
-                const py =
-                    margin +
-                    point.y *
-                    scaleY;
-
-
-                if (
-                    index === 0
-                ) {
-
-                    ctx.moveTo(
-                        px,
-                        py
-                    );
-
-                } else {
-
-                    ctx.lineTo(
-                        px,
-                        py
-                    );
-                }
+            if (i === 0) {
+                ctx.moveTo(
+                    p.x,
+                    p.y
+                );
+            } else {
+                ctx.lineTo(
+                    p.x,
+                    p.y
+                );
             }
-        );
-
-
-        if (
-            road.type ===
-            "autopista"
-        ) {
-
-            ctx.strokeStyle =
-                "#ffffff";
-
-        } else if (
-            road.type ===
-            "autovia"
-        ) {
-
-            ctx.strokeStyle =
-                "#e4c34c";
-
-        } else if (
-            road.type ===
-            "nacional"
-        ) {
-
-            ctx.strokeStyle =
-                "#e48c45";
-
-        } else {
-
-            ctx.strokeStyle =
-                "#888";
         }
 
-
         ctx.lineWidth =
-            road.type ===
-            "autopista"
-                ? 5
+            road.type === "autopista"
+                ? 7
+                : road.type === "autovia"
+                ? 6
+                : road.type === "nacional"
+                ? 4
                 : 3;
 
+        ctx.strokeStyle =
+            road.type === "autopista"
+                ? "#fff"
+                : road.type === "autovia"
+                ? "#ffcc33"
+                : road.type === "nacional"
+                ? "#e98b35"
+                : "#aaa";
 
         ctx.stroke();
     }
 
+    // ciudades
 
-    // TRÁFICO
+    for (const city of cities) {
 
-    for (
-        const vehicle of traffic
-    ) {
-
-        const vx =
-            margin +
-            vehicle.x *
-            scaleX;
-
-
-        const vy =
-            margin +
-            vehicle.y *
-            scaleY;
-
+        const p =
+            mapPoint(
+                city.x,
+                city.y
+            );
 
         ctx.fillStyle =
-            "#ff8c42";
-
+            "#fff";
 
         ctx.beginPath();
 
         ctx.arc(
-            vx,
-            vy,
+            p.x,
+            p.y,
+            6,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.font =
+            "bold 16px Arial";
+
+        ctx.fillText(
+            city.name,
+            p.x + 9,
+            p.y - 9
+        );
+    }
+
+    // pueblos
+
+    for (const village of villages) {
+
+        const p =
+            mapPoint(
+                village.x,
+                village.y
+            );
+
+        ctx.fillStyle =
+            "#ccc";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
             3,
             0,
             Math.PI * 2
         );
 
         ctx.fill();
-    }
-
-
-    // CIUDADES
-
-    for (
-        const city of cities
-    ) {
-
-        const px =
-            margin +
-            city.x *
-            scaleX;
-
-
-        const py =
-            margin +
-            city.y *
-            scaleY;
-
-
-        ctx.fillStyle =
-            "#ffffff";
-
-
-        ctx.beginPath();
-
-        ctx.arc(
-            px,
-            py,
-            7,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-
-        ctx.font =
-            "bold 15px Arial";
-
-
-        ctx.textAlign =
-            "left";
-
-
-        ctx.fillText(
-            city.name,
-            px + 10,
-            py - 8
-        );
-    }
-
-
-    // PUEBLOS
-
-    for (
-        const village of villages
-    ) {
-
-        const px =
-            margin +
-            village.x *
-            scaleX;
-
-
-        const py =
-            margin +
-            village.y *
-            scaleY;
-
-
-        ctx.fillStyle =
-            "#d8c58a";
-
-
-        ctx.beginPath();
-
-        ctx.arc(
-            px,
-            py,
-            4,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
 
         ctx.font =
             "11px Arial";
 
-
-        ctx.fillStyle =
-            "#ddd";
-
-
         ctx.fillText(
             village.name,
-            px + 7,
-            py + 4
+            p.x + 6,
+            p.y + 4
         );
     }
 
+    // destino
 
-    // CAMIÓN
+    if (
+        job.active &&
+        job.destination
+    ) {
 
-    const tx =
-        margin +
-        truck.x *
-        scaleX;
+        const p =
+            mapPoint(
+                job.destination.x,
+                job.destination.y
+            );
 
+        ctx.fillStyle =
+            "#00e5ff";
 
-    const ty =
-        margin +
-        truck.y *
-        scaleY;
+        ctx.beginPath();
 
+        ctx.arc(
+            p.x,
+            p.y,
+            12,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#fff";
+
+        ctx.font =
+            "bold 18px Arial";
+
+        ctx.fillText(
+            "DESTINO: " +
+            job.destination.name,
+            p.x + 15,
+            p.y
+        );
+    }
+
+    // camión
+
+    const t =
+        mapPoint(
+            truck.x,
+            truck.y
+        );
 
     ctx.fillStyle =
-        "#ff3030";
-
+        "#ff3333";
 
     ctx.beginPath();
 
     ctx.arc(
-        tx,
-        ty,
-        9,
+        t.x,
+        t.y,
+        8,
         0,
         Math.PI * 2
     );
 
     ctx.fill();
 
+    ctx.fillStyle =
+        "#fff";
 
-    // TÍTULO
+    ctx.font =
+        "bold 20px Arial";
+
+    ctx.fillText(
+        "MAPA - ESC / M para volver",
+        25,
+        35
+    );
+}
+
+
+// ============================================================
+// HUD
+// ============================================================
+
+function drawHUD() {
+
+    const limit =
+        roadSpeedLimit(
+            currentRoad
+        );
+
+    // panel inferior
+
+    const hudHeight = 145;
+
+    const hudY =
+        canvas.height -
+        hudHeight;
+
+    ctx.fillStyle =
+        "rgba(5,8,12,0.91)";
+
+    ctx.fillRect(
+        0,
+        hudY,
+        canvas.width,
+        hudHeight
+    );
+
+    // velocidad
 
     ctx.fillStyle =
         "#fff";
 
-
     ctx.font =
-        "bold 24px Arial";
-
-
-    ctx.textAlign =
-        "center";
-
+        "bold 45px Arial";
 
     ctx.fillText(
-        "MAPA",
-        canvas.width / 2,
-        35
+        Math.round(truck.speed),
+        35,
+        hudY + 55
     );
-
 
     ctx.font =
         "14px Arial";
 
-
     ctx.fillText(
-        "Pulsa M para volver al juego",
-        canvas.width / 2,
-        canvas.height - 20
+        "km/h",
+        115,
+        hudY + 55
     );
 
-
-    ctx.textAlign =
-        "left";
-}
-
-
-// ==========================================================
-// SERVICIOS
-// ==========================================================
-
-function getNearestServicePoint(
-    type
-) {
-
-    let nearest =
-        null;
-
-
-    let nearestDistance =
-        Infinity;
-
-
-    for (
-        const poi of pointsOfInterest
-    ) {
-
-        if (
-            poi.type !==
-            type
-        ) {
-
-            continue;
-        }
-
-
-        const d =
-            distance(
-                truck.x,
-                truck.y,
-                poi.x,
-                poi.y
-            );
-
-
-        if (
-            d <
-            nearestDistance
-        ) {
-
-            nearest =
-                poi;
-
-
-            nearestDistance =
-                d;
-        }
-    }
-
-
-    return nearest;
-}
-
-
-// ==========================================================
-// CÁMARA
-// ==========================================================
-
-function updateCamera() {
-
-    camera.x +=
-        (
-            truck.x -
-            camera.x
-        ) *
-        0.08;
-
-
-    camera.y +=
-        (
-            truck.y -
-            camera.y
-        ) *
-        0.08;
-}
-
-
-// ==========================================================
-// ACTUALIZAR CAMIÓN
-// ==========================================================
-
-function updateTruck() {
-
-    updateAcceleration();
-
-    updateBrakes();
-
-    applyNaturalResistance();
-
-    applySpeedLimits();
-
-    updateSteering();
-
-    updateMovement();
-
-    keepTruckInsideWorld();
-
-    updateRPM();
-
-    updateFuel();
-
-    updateCamera();
-}
-
-
-// ==========================================================
-// HUD
-// ==========================================================
-
-function drawHUD() {
-
-    const x =
-        20;
-
-
-    const y =
-        20;
-
-
-    const width =
-        310;
-
-
-    const height =
-        310;
-
+    // límite
 
     ctx.fillStyle =
-        "rgba(10,14,18,0.90)";
-
-
-    ctx.fillRect(
-        x,
-        y,
-        width,
-        height
-    );
-
-
-    // VELOCIDAD
-
-    ctx.fillStyle =
-        "#aaa";
-
+        "#ddd";
 
     ctx.font =
-        "12px Arial";
-
+        "14px Arial";
 
     ctx.fillText(
-        "VELOCIDAD",
-        x + 20,
-        y + 25
+        "LÍMITE " +
+        limit +
+        " km/h",
+        35,
+        hudY + 82
     );
 
+    // marcha
 
     ctx.fillStyle =
         "#fff";
 
-
     ctx.font =
-        "bold 42px Arial";
-
-
-    ctx.fillText(
-        Math.round(
-            truck.speed
-        ),
-        x + 20,
-        y + 68
-    );
-
-
-    ctx.font =
-        "16px Arial";
-
-
-    ctx.fillText(
-        "km/h",
-        x + 105,
-        y + 68
-    );
-
-
-    // MARCHA
-
-    ctx.fillStyle =
-        "#aaa";
-
-
-    ctx.font =
-        "12px Arial";
-
-
-    ctx.fillText(
-        "MARCHA",
-        x + 205,
-        y + 25
-    );
-
-
-    ctx.fillStyle =
-        truck.reverse
-            ? "#ff4d4d"
-            : "#fff";
-
-
-    ctx.font =
-        "bold 36px Arial";
-
+        "bold 27px Arial";
 
     ctx.fillText(
         truck.reverse
             ? "R"
             : truck.gear,
-        x + 220,
-        y + 68
+        190,
+        hudY + 55
     );
-
-
-    // RPM
-
-    ctx.fillStyle =
-        "#aaa";
-
 
     ctx.font =
         "12px Arial";
 
-
     ctx.fillText(
-        "RPM",
-        x + 20,
-        y + 98
+        "MARCHA",
+        190,
+        hudY + 78
     );
 
-
-    ctx.fillStyle =
-        "#fff";
-
+    // RPM
 
     ctx.font =
         "bold 20px Arial";
 
-
     ctx.fillText(
-        Math.round(
-            truck.rpm
-        ),
-        x + 60,
-        y + 98
+        Math.round(truck.rpm) +
+        " RPM",
+        275,
+        hudY + 55
     );
 
-
-    // BARRA RPM
-
-    ctx.fillStyle =
-        "#252525";
-
-
-    ctx.fillRect(
-        x + 20,
-        y + 110,
-        250,
-        14
-    );
-
-
-    const rpmPercent =
-        (
-            truck.rpm -
-            truck.minRPM
-        ) /
-        (
-            truck.maxRPM -
-            truck.minRPM
-        );
-
-
-    ctx.fillStyle =
-        rpmPercent > 0.85
-            ? "#e44b4b"
-            : "#e5c44d";
-
-
-    ctx.fillRect(
-        x + 20,
-        y + 110,
-        250 *
-        clamp(
-            rpmPercent,
-            0,
-            1
-        ),
-        14
-    );
-
-
-    // COMBUSTIBLE
-
-    ctx.fillStyle =
-        "#aaa";
-
-
-    ctx.font =
-        "12px Arial";
-
-
-    ctx.fillText(
-        "COMBUSTIBLE",
-        x + 20,
-        y + 150
-    );
-
-
-    ctx.fillStyle =
-        "#222";
-
-
-    ctx.fillRect(
-        x + 20,
-        y + 160,
-        250,
-        14
-    );
-
-
-    ctx.fillStyle =
-        truck.fuel < 20
-            ? "#e44b4b"
-            : "#52c878";
-
-
-    ctx.fillRect(
-        x + 20,
-        y + 160,
-        250 *
-        (
-            truck.fuel /
-            100
-        ),
-        14
-    );
-
+    // combustible
 
     ctx.fillStyle =
         "#fff";
 
+    ctx.fillText(
+        "COMBUSTIBLE",
+        430,
+        hudY + 30
+    );
+
+    ctx.fillStyle =
+        "#333";
+
+    ctx.fillRect(
+        430,
+        hudY + 40,
+        160,
+        15
+    );
+
+    ctx.fillStyle =
+        truck.fuel < 20
+            ? "#e33"
+            : "#3c9";
+
+    ctx.fillRect(
+        430,
+        hudY + 40,
+        160 *
+        (
+            truck.fuel /
+            truck.fuelCapacity
+        ),
+        15
+    );
+
+    ctx.fillStyle =
+        "#fff";
 
     ctx.fillText(
         Math.round(
             truck.fuel
         ) +
         "%",
-        x + 115,
-        y + 192
+        600,
+        hudY + 53
     );
 
-
-    // DAÑOS
-
-    ctx.fillStyle =
-        "#aaa";
-
-
-    ctx.fillText(
-        "DAÑOS",
-        x + 20,
-        y + 215
-    );
-
-
-    ctx.fillStyle =
-        "#222";
-
-
-    ctx.fillRect(
-        x + 70,
-        y + 204,
-        200,
-        14
-    );
-
-
-    ctx.fillStyle =
-        truck.damage > 60
-            ? "#e44b4b"
-            : "#d2a941";
-
-
-    ctx.fillRect(
-        x + 70,
-        y + 204,
-        200 *
-        (
-            truck.damage /
-            100
-        ),
-        14
-    );
-
-
-    // PESO
-
-    ctx.fillStyle =
-        "#aaa";
-
-
-    ctx.fillText(
-        "PESO: " +
-        getTotalWeight() +
-        " kg",
-        x + 20,
-        y + 238
-    );
-
-
-    // HORA
-
-    ctx.fillStyle =
-        "#fff";
-
+    // dinero
 
     ctx.font =
-        "bold 16px Arial";
-
+        "bold 20px Arial";
 
     ctx.fillText(
-        "Hora: " +
-        formatTime(),
-        x + 20,
-        y + 263
+        "€" +
+        Math.round(money),
+        430,
+        hudY + 95
     );
 
-
-    // TIEMPO
-
-    ctx.fillStyle =
-        "#aaa";
-
+    // daños
 
     ctx.font =
         "13px Arial";
 
-
     ctx.fillText(
-        "Tiempo: " +
-        weather,
-        x + 20,
-        y + 285
+        "Daños: " +
+        Math.round(truck.damage) +
+        "%",
+        610,
+        hudY + 95
     );
 
-
-    // LUCES
+    // carretera
 
     ctx.fillText(
-        "Luces: " +
-        (
-            lightsOn
-                ? "ON"
-                : "OFF"
-        ),
-        x + 165,
-        y + 285
+        currentRoad
+            ? currentRoad.name
+            : "Fuera de carretera",
+        760,
+        hudY + 30
+    );
+
+    ctx.fillText(
+        currentRoad
+            ? currentRoad.type.toUpperCase()
+            : "",
+        760,
+        hudY + 52
+    );
+
+    // trabajo
+
+    if (job.active) {
+
+        ctx.fillStyle =
+            "#00e5ff";
+
+        ctx.font =
+            "bold 15px Arial";
+
+        ctx.fillText(
+            "🧭 " +
+            job.from +
+            " → " +
+            job.to,
+            760,
+            hudY + 78
+        );
+
+        ctx.fillStyle =
+            "#fff";
+
+        ctx.font =
+            "13px Arial";
+
+        ctx.fillText(
+            job.cargo +
+            " | " +
+            Math.round(
+                job.distance / 100
+            ) +
+            " km",
+            760,
+            hudY + 100
+        );
+
+        ctx.fillText(
+            "Pago: €" +
+            job.reward,
+            760,
+            hudY + 120
+        );
+
+    } else {
+
+        ctx.fillStyle =
+            "#aaa";
+
+        ctx.fillText(
+            "Pulsa N para aceptar un trabajo",
+            760,
+            hudY + 85
+        );
+    }
+
+    // controles
+
+    ctx.fillStyle =
+        "#999";
+
+    ctx.font =
+        "11px Arial";
+
+    ctx.fillText(
+        "W/S conducir • A/D girar • +/- marchas • B R • N trabajo • M mapa • R repostar • L luces",
+        35,
+        canvas.height - 12
     );
 }
 
 
-// ==========================================================
+// ============================================================
 // MENSAJES
-// ==========================================================
+// ============================================================
 
-let message =
-    "";
+let message = "";
 
-
-let messageTimer =
-    0;
+let messageUntil = 0;
 
 
-function showMessage(
-    text
-) {
+function showMessage(text) {
 
     message =
         text;
 
-
-    messageTimer =
-        150;
+    messageUntil =
+        Date.now() + 3000;
 }
 
 
 function drawMessage() {
 
     if (
-        messageTimer <= 0
+        Date.now() >
+        messageUntil
     ) {
-
         return;
     }
 
-
-    const width =
-        440;
-
-
-    const height =
-        52;
-
+    const width = 500;
 
     const x =
         canvas.width / 2 -
         width / 2;
 
-
-    const y =
-        20;
-
+    const y = 45;
 
     ctx.fillStyle =
-        "rgba(0,0,0,0.85)";
-
+        "rgba(0,0,0,0.82)";
 
     ctx.fillRect(
         x,
         y,
         width,
-        height
+        50
     );
-
 
     ctx.fillStyle =
         "#fff";
 
-
     ctx.font =
-        "bold 18px Arial";
-
+        "bold 17px Arial";
 
     ctx.textAlign =
         "center";
-
 
     ctx.fillText(
         message,
@@ -4696,378 +2958,292 @@ function drawMessage() {
         y + 32
     );
 
-
     ctx.textAlign =
         "left";
-
-
-    messageTimer--;
 }
 
 
-// ==========================================================
-// CAMIÓN
-// ==========================================================
+// ============================================================
+// LLUVIA
+// ============================================================
 
-function drawTruck() {
+function drawRain() {
 
-    if (
-        fullMap
-    ) {
-
+    if (!rain) {
         return;
     }
 
-
-    const p =
-        worldToScreen(
-            truck.x,
-            truck.y
-        );
-
-
-    ctx.save();
-
-
-    ctx.translate(
-        p.x,
-        p.y
-    );
-
-
-    ctx.rotate(
-        truck.angle
-    );
-
-
-    // SOMBRA
-
-    ctx.fillStyle =
-        "rgba(0,0,0,0.35)";
-
-
-    ctx.fillRect(
-        -32,
-        -63,
-        64,
-        145
-    );
-
-
-    // REMOLQUE
-
-    ctx.fillStyle =
-        "#d7d7d7";
-
-
-    ctx.fillRect(
-        -25,
-        0,
-        50,
-        85
-    );
-
-
     ctx.strokeStyle =
-        "#444";
+        "rgba(180,210,255,0.35)";
+
+    ctx.lineWidth = 1;
+
+    for (
+        let i = 0;
+        i < 100;
+        i++
+    ) {
+
+        const x =
+            Math.random() *
+            canvas.width;
+
+        const y =
+            Math.random() *
+            canvas.height;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x,
+            y
+        );
+
+        ctx.lineTo(
+            x - 4,
+            y + 18
+        );
+
+        ctx.stroke();
+    }
+}
 
 
-    ctx.lineWidth =
-        3;
+// ============================================================
+// NOCHE
+// ============================================================
 
+function drawNight() {
 
-    ctx.strokeRect(
-        -25,
+    if (
+        timeOfDay >= 7 &&
+        timeOfDay <= 20
+    ) {
+        return;
+    }
+
+    ctx.fillStyle =
+        "rgba(0,5,25,0.42)";
+
+    ctx.fillRect(
         0,
-        50,
-        85
+        0,
+        canvas.width,
+        canvas.height
     );
-
-
-    // CABINA
-
-    ctx.fillStyle =
-        "#c83232";
-
-
-    ctx.fillRect(
-        -29,
-        -70,
-        58,
-        62
-    );
-
-
-    // PARABRISAS
-
-    ctx.fillStyle =
-        "#71a8c5";
-
-
-    ctx.fillRect(
-        -21,
-        -61,
-        42,
-        25
-    );
-
-
-    // PARACHOQUES
-
-    ctx.fillStyle =
-        "#c9c9c9";
-
-
-    ctx.fillRect(
-        -31,
-        -77,
-        62,
-        8
-    );
-
-
-    // RUEDAS
-
-    ctx.fillStyle =
-        "#111";
-
-
-    ctx.fillRect(
-        -35,
-        -47,
-        10,
-        24
-    );
-
-
-    ctx.fillRect(
-        25,
-        -47,
-        10,
-        24
-    );
-
-
-    ctx.fillRect(
-        -35,
-        40,
-        10,
-        24
-    );
-
-
-    ctx.fillRect(
-        25,
-        40,
-        10,
-        24
-    );
-
-
-    // FAROS
-
-    ctx.fillStyle =
-        "#fff0a8";
-
-
-    ctx.fillRect(
-        -20,
-        -85,
-        12,
-        8
-    );
-
-
-    ctx.fillRect(
-        8,
-        -85,
-        12,
-        8
-    );
-
-
-    ctx.restore();
 }
 
 
-// ==========================================================
-// HUD EXTERNO
-// ==========================================================
+// ============================================================
+// ACTUALIZAR CAMIÓN
+// ============================================================
 
-function updateExternalHUD() {
+function updateTruck() {
 
-    const speed =
-        document.getElementById(
-            "bottomSpeed"
-        );
+    updateEngine();
 
+    updateBrakes();
 
-    if (speed) {
+    updateResistance();
 
-        speed.textContent =
-            Math.round(
-                truck.speed
-            );
-    }
+    updateSpeedLimit();
 
+    updateSteering();
 
-    const gear =
-        document.getElementById(
-            "bottomGear"
-        );
+    updateMovement();
 
+    keepInsideWorld();
 
-    if (gear) {
+    updateRPM();
 
-        gear.textContent =
-            truck.reverse
-                ? "R"
-                : truck.gear;
-    }
-
-
-    const lights =
-        document.getElementById(
-            "lightsStatus"
-        );
-
-
-    if (lights) {
-
-        lights.textContent =
-            lightsOn
-                ? "ON"
-                : "OFF";
-    }
-
-
-    const engineBrake =
-        document.getElementById(
-            "engineBrakeStatus"
-        );
-
-
-    if (engineBrake) {
-
-        engineBrake.textContent =
-            (
-                !keys.w &&
-                truck.speed > 5
-            )
-                ? "ON"
-                : "OFF";
-    }
+    updateFuel();
 }
 
 
-// ==========================================================
-// TIEMPO DEL BUCLE
-// ==========================================================
+// ============================================================
+// ACTUALIZAR TODO
+// ============================================================
 
-let lastFrameTime =
-    performance.now();
-
-
-// ==========================================================
-// BUCLE PRINCIPAL
-// ==========================================================
-
-function gameLoop(
-    currentTime
-) {
-
-    const delta =
-        Math.min(
-            0.05,
-            (
-                currentTime -
-                lastFrameTime
-            ) /
-            1000
-        );
-
-
-    lastFrameTime =
-        currentTime;
-
-
-    // ACTUALIZACIÓN
+function updateGame() {
 
     updateTruck();
 
+    updateCurrentRoad();
 
-    updateTraffic(
-        delta
-    );
+    updateJob();
 
+    updateFines();
 
-    checkTrafficCollisions();
+    updateTraffic();
 
+    updateCamera();
 
-    updateTrafficLights(
-        delta
-    );
-
-
-    updateDayNight(
-        delta
-    );
+    updateEnvironment();
+}
 
 
-    updateWeather(
-        delta
-    );
+// ============================================================
+// DIBUJAR TODO
+// ============================================================
 
-
-    updateRain(
-        delta
-    );
-
-
-    // RENDER
+function drawGame() {
 
     if (fullMap) {
 
         drawFullMap();
 
-    } else {
-
-        drawWorld();
-
-        drawClouds();
-
-        drawRoads();
-
-        drawCities();
-
-        drawVillages();
-
-        drawPOIs();
-
-        drawSigns();
-
-        drawTrafficLights();
-
-        drawTraffic();
-
-        drawTruck();
-
-        drawTruckLights();
-
-        drawHUD();
-
-        drawMinimap();
-
-        drawRain();
-
-        drawNightOverlay();
-
-        drawMessage();
+        return;
     }
 
+    drawWorld();
 
-    updateExternalHUD();
+    drawRoads();
 
+    drawCities();
+
+    drawVillages();
+
+    drawPOIs();
+
+    drawTraffic();
+
+    drawNavigationRoute();
+
+    drawTruck();
+
+    drawMinimap();
+
+    drawHUD();
+
+    drawMessage();
+
+    drawRain();
+
+    drawNight();
+}
+
+
+// ============================================================
+// NAVEGACIÓN
+// ============================================================
+
+function drawNavigationRoute() {
+
+    if (
+        !job.active ||
+        !job.destination
+    ) {
+        return;
+    }
+
+    const start =
+        worldToScreen(
+            truck.x,
+            truck.y
+        );
+
+    const destination =
+        worldToScreen(
+            job.destination.x,
+            job.destination.y
+        );
+
+    ctx.save();
+
+    ctx.strokeStyle =
+        "#00e5ff";
+
+    ctx.lineWidth = 5;
+
+    ctx.setLineDash(
+        [14, 10]
+    );
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        start.x,
+        start.y
+    );
+
+    ctx.lineTo(
+        destination.x,
+        destination.y
+    );
+
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+    ctx.fillStyle =
+        "#00e5ff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        destination.x,
+        destination.y,
+        10,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle =
+        "#fff";
+
+    ctx.font =
+        "bold 15px Arial";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.fillText(
+        job.destination.name,
+        destination.x,
+        destination.y - 20
+    );
+
+    ctx.textAlign =
+        "left";
+
+    ctx.restore();
+}
+
+
+// ============================================================
+// ESTADO
+// ============================================================
+
+let fullMap = false;
+
+let paused = false;
+
+
+// ============================================================
+// INICIO
+// ============================================================
+
+updateCurrentRoad();
+
+showMessage(
+    "JUEGO CARGADO - Pulsa N para conseguir un trabajo"
+);
+
+
+// ============================================================
+// BUCLE PRINCIPAL
+// ============================================================
+
+function gameLoop() {
+
+    if (!paused) {
+
+        updateGame();
+    }
+
+    drawGame();
 
     requestAnimationFrame(
         gameLoop
@@ -5075,1394 +3251,4 @@ function gameLoop(
 }
 
 
-// ==========================================================
-// INICIO
-// ==========================================================
-
-showMessage(
-    "FASES 1 + 2 + 3 CARGADAS"
-);
-
-
-requestAnimationFrame(
-    gameLoop
-);
-// ==========================================================
-// FASE 4
-// NAVEGACIÓN + LÍMITES + MULTAS + DESTINO + RUTA
-// ==========================================================
-
-// ----------------------------------------------------------
-// ESTADO DE LA FASE 4
-// ----------------------------------------------------------
-
-let phase4 = {
-
-    currentRoad: "Fuera de carretera",
-
-    speedLimit: 50,
-
-    distanceToDestination: 0,
-
-    navigationActive: false,
-
-    destination: null,
-
-    route: [],
-
-    fines: 0,
-
-    lastFineTime: 0,
-
-    messageTimer: 0,
-
-    policeActive: false,
-
-    checkpointActive: false
-};
-
-
-// ----------------------------------------------------------
-// DESTINOS
-// ----------------------------------------------------------
-
-const phase4Destinations = [
-
-    {
-        name: "Madrid",
-        x: 5000,
-        y: 3750
-    },
-
-    {
-        name: "Toledo",
-        x: 3900,
-        y: 4700
-    },
-
-    {
-        name: "Valencia",
-        x: 7900,
-        y: 3900
-    },
-
-    {
-        name: "Cuenca",
-        x: 6500,
-        y: 4700
-    },
-
-    {
-        name: "Zaragoza",
-        x: 8300,
-        y: 1700
-    },
-
-    {
-        name: "Segovia",
-        x: 3700,
-        y: 2200
-    },
-
-    {
-        name: "Ávila",
-        x: 2500,
-        y: 3400
-    }
-];
-
-
-// ----------------------------------------------------------
-// DISTANCIA
-// ----------------------------------------------------------
-
-function phase4Distance(
-    x1,
-    y1,
-    x2,
-    y2
-) {
-
-    return Math.sqrt(
-
-        Math.pow(
-            x2 - x1,
-            2
-        )
-
-        +
-
-        Math.pow(
-            y2 - y1,
-            2
-        )
-    );
-}
-
-
-// ----------------------------------------------------------
-// CARRETERA MÁS CERCANA
-// ----------------------------------------------------------
-
-function getNearestRoad() {
-
-    let nearest =
-        null;
-
-    let nearestDistance =
-        Infinity;
-
-
-    for (
-        const road of roads
-    ) {
-
-        for (
-            const point of road.points
-        ) {
-
-            const d =
-                phase4Distance(
-
-                    truck.x,
-                    truck.y,
-
-                    point.x,
-                    point.y
-                );
-
-
-            if (
-                d <
-                nearestDistance
-            ) {
-
-                nearestDistance =
-                    d;
-
-                nearest =
-                    road;
-            }
-        }
-    }
-
-
-    return nearest;
-}
-
-
-// ----------------------------------------------------------
-// LÍMITE DE VELOCIDAD
-// ----------------------------------------------------------
-
-function getRoadSpeedLimit(
-    road
-) {
-
-    if (!road) {
-
-        return 50;
-    }
-
-
-    switch (
-        road.type
-    ) {
-
-        case "autopista":
-
-            return 120;
-
-
-        case "autovia":
-
-            return 110;
-
-
-        case "nacional":
-
-            return 90;
-
-
-        case "secundaria":
-
-            return 80;
-
-
-        case "montana":
-
-            return 60;
-
-
-        default:
-
-            return 50;
-    }
-}
-
-
-// ----------------------------------------------------------
-// ACTUALIZAR CARRETERA ACTUAL
-// ----------------------------------------------------------
-
-function updateCurrentRoad() {
-
-    const road =
-        getNearestRoad();
-
-
-    if (!road) {
-
-        phase4.currentRoad =
-            "Fuera de carretera";
-
-        phase4.speedLimit =
-            50;
-
-        return;
-    }
-
-
-    phase4.currentRoad =
-        road.name;
-
-
-    phase4.speedLimit =
-        getRoadSpeedLimit(
-            road
-        );
-}
-
-
-// ----------------------------------------------------------
-// DETECTAR EXCESO DE VELOCIDAD
-// ----------------------------------------------------------
-
-function checkSpeedLimit() {
-
-    if (
-        truck.speed <=
-        phase4.speedLimit
-    ) {
-
-        return;
-    }
-
-
-    if (
-        truck.reverse
-    ) {
-
-        return;
-    }
-
-
-    const now =
-        Date.now();
-
-
-    if (
-        now -
-        phase4.lastFineTime
-        <
-        10000
-    ) {
-
-        return;
-    }
-
-
-    const excess =
-        truck.speed -
-        phase4.speedLimit;
-
-
-    if (
-        excess < 10
-    ) {
-
-        return;
-    }
-
-
-    let fine =
-        50;
-
-
-    if (
-        excess >= 20
-    ) {
-
-        fine =
-            150;
-    }
-
-
-    if (
-        excess >= 40
-    ) {
-
-        fine =
-            350;
-    }
-
-
-    if (
-        excess >= 60
-    ) {
-
-        fine =
-            700;
-    }
-
-
-    phase4.fines +=
-        fine;
-
-
-    if (
-        typeof money !==
-        "undefined"
-    ) {
-
-        money -=
-            fine;
-    }
-
-
-    phase4.lastFineTime =
-        now;
-
-
-    showMessage(
-        "🚓 MULTA: €" +
-        fine +
-        " | EXCESO DE VELOCIDAD"
-    );
-}
-
-
-// ----------------------------------------------------------
-// ELEGIR DESTINO
-// ----------------------------------------------------------
-
-function chooseDestination(
-    destination
-) {
-
-    if (!destination) {
-
-        return;
-    }
-
-
-    phase4.destination =
-        destination;
-
-
-    phase4.navigationActive =
-        true;
-
-
-    phase4.route = [
-
-        {
-            x:
-                truck.x,
-
-            y:
-                truck.y
-        },
-
-        {
-            x:
-                destination.x,
-
-            y:
-                destination.y
-        }
-    ];
-
-
-    updateDistanceToDestination();
-
-
-    showMessage(
-
-        "🧭 DESTINO: " +
-        destination.name
-
-    );
-}
-
-
-// ----------------------------------------------------------
-// DESTINO ALEATORIO
-// ----------------------------------------------------------
-
-function chooseRandomDestination() {
-
-    const available =
-        phase4Destinations
-            .filter(
-                function(destination) {
-
-                    return (
-                        phase4Distance(
-
-                            truck.x,
-                            truck.y,
-
-                            destination.x,
-                            destination.y
-
-                        ) > 500
-                    );
-                }
-            );
-
-
-    if (
-        available.length ===
-        0
-    ) {
-
-        return;
-    }
-
-
-    const destination =
-        available[
-            Math.floor(
-                Math.random() *
-                available.length
-            )
-        ];
-
-
-    chooseDestination(
-        destination
-    );
-}
-
-
-// ----------------------------------------------------------
-// DISTANCIA AL DESTINO
-// ----------------------------------------------------------
-
-function updateDistanceToDestination() {
-
-    if (
-        !phase4.destination
-    ) {
-
-        phase4.distanceToDestination =
-            0;
-
-        return;
-    }
-
-
-    phase4.distanceToDestination =
-
-        phase4Distance(
-
-            truck.x,
-            truck.y,
-
-            phase4.destination.x,
-            phase4.destination.y
-        );
-}
-
-
-// ----------------------------------------------------------
-// LLEGADA AL DESTINO
-// ----------------------------------------------------------
-
-function checkDestinationArrival() {
-
-    if (
-        !phase4.navigationActive
-    ) {
-
-        return;
-    }
-
-
-    if (
-        !phase4.destination
-    ) {
-
-        return;
-    }
-
-
-    const distance =
-        phase4.distanceToDestination;
-
-
-    if (
-        distance >
-        120
-    ) {
-
-        return;
-    }
-
-
-    const destinationName =
-        phase4.destination.name;
-
-
-    phase4.navigationActive =
-        false;
-
-
-    phase4.route =
-        [];
-
-
-    phase4.destination =
-        null;
-
-
-    showMessage(
-
-        "🏁 HAS LLEGADO A " +
-        destinationName
-
-    );
-
-
-    // ------------------------------------------------------
-    // COMPATIBILIDAD CON SISTEMA DE TRABAJOS
-    // ------------------------------------------------------
-
-    if (
-        typeof currentJob !==
-        "undefined" &&
-        currentJob
-    ) {
-
-        if (
-            typeof completeCurrentJob ===
-            "function"
-        ) {
-
-            completeCurrentJob();
-        }
-    }
-}
-
-
-// ----------------------------------------------------------
-// RUTA DE NAVEGACIÓN
-// ----------------------------------------------------------
-
-function drawNavigationRoute() {
-
-    if (
-        !phase4.navigationActive
-    ) {
-
-        return;
-    }
-
-
-    if (
-        !phase4.destination
-    ) {
-
-        return;
-    }
-
-
-    const start =
-        worldToScreen(
-
-            truck.x,
-            truck.y
-        );
-
-
-    const destination =
-        worldToScreen(
-
-            phase4.destination.x,
-            phase4.destination.y
-        );
-
-
-    ctx.save();
-
-
-    ctx.strokeStyle =
-        "#00e5ff";
-
-
-    ctx.lineWidth =
-        6;
-
-
-    ctx.setLineDash(
-        [
-            15,
-            10
-        ]
-    );
-
-
-    ctx.beginPath();
-
-
-    ctx.moveTo(
-        start.x,
-        start.y
-    );
-
-
-    ctx.lineTo(
-        destination.x,
-        destination.y
-    );
-
-
-    ctx.stroke();
-
-
-    ctx.setLineDash([]);
-
-
-    // DESTINO
-
-    ctx.fillStyle =
-        "#00e5ff";
-
-
-    ctx.beginPath();
-
-    ctx.arc(
-        destination.x,
-        destination.y,
-        13,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    ctx.strokeStyle =
-        "#ffffff";
-
-
-    ctx.lineWidth =
-        3;
-
-
-    ctx.beginPath();
-
-    ctx.arc(
-        destination.x,
-        destination.y,
-        22,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.stroke();
-
-
-    ctx.fillStyle =
-        "#ffffff";
-
-
-    ctx.font =
-        "bold 16px Arial";
-
-
-    ctx.textAlign =
-        "center";
-
-
-    ctx.fillText(
-
-        phase4.destination.name,
-
-        destination.x,
-
-        destination.y - 28
-
-    );
-
-
-    ctx.restore();
-
-
-    ctx.textAlign =
-        "left";
-}
-
-
-// ----------------------------------------------------------
-// RUTA EN MINIMAPA
-// ----------------------------------------------------------
-
-function drawNavigationOnMinimap() {
-
-    if (
-        !phase4.navigationActive
-    ) {
-
-        return;
-    }
-
-
-    if (
-        !phase4.destination
-    ) {
-
-        return;
-    }
-
-
-    const size =
-        230;
-
-
-    const x =
-        canvas.width -
-        size -
-        20;
-
-
-    const y =
-        20;
-
-
-    const scaleX =
-        size /
-        WORLD_WIDTH;
-
-
-    const scaleY =
-        size /
-        WORLD_HEIGHT;
-
-
-    const truckX =
-        x +
-        truck.x *
-        scaleX;
-
-
-    const truckY =
-        y +
-        truck.y *
-        scaleY;
-
-
-    const destinationX =
-        x +
-        phase4.destination.x *
-        scaleX;
-
-
-    const destinationY =
-        y +
-        phase4.destination.y *
-        scaleY;
-
-
-    ctx.save();
-
-
-    ctx.strokeStyle =
-        "#00e5ff";
-
-
-    ctx.lineWidth =
-        3;
-
-
-    ctx.setLineDash(
-        [
-            7,
-            5
-        ]
-    );
-
-
-    ctx.beginPath();
-
-
-    ctx.moveTo(
-        truckX,
-        truckY
-    );
-
-
-    ctx.lineTo(
-        destinationX,
-        destinationY
-    );
-
-
-    ctx.stroke();
-
-
-    ctx.setLineDash([]);
-
-
-    ctx.fillStyle =
-        "#00e5ff";
-
-
-    ctx.beginPath();
-
-
-    ctx.arc(
-        destinationX,
-        destinationY,
-        5,
-        0,
-        Math.PI * 2
-    );
-
-
-    ctx.fill();
-
-
-    ctx.restore();
-}
-
-
-// ----------------------------------------------------------
-// CONTROL DE POLICÍA
-// ----------------------------------------------------------
-
-function createPoliceCheckpoint(
-    x,
-    y
-) {
-
-    phase4.policeActive =
-        true;
-
-
-    phase4.checkpointActive =
-        true;
-
-
-    phase4.policeX =
-        x;
-
-
-    phase4.policeY =
-        y;
-}
-
-
-function updatePoliceCheckpoint() {
-
-    if (
-        !phase4.checkpointActive
-    ) {
-
-        return;
-    }
-
-
-    const d =
-        phase4Distance(
-
-            truck.x,
-            truck.y,
-
-            phase4.policeX,
-            phase4.policeY
-        );
-
-
-    if (
-        d >
-        100
-    ) {
-
-        return;
-    }
-
-
-    phase4.checkpointActive =
-        false;
-
-
-    if (
-        truck.speed >
-        phase4.speedLimit + 15
-    ) {
-
-        const fine =
-            250;
-
-
-        phase4.fines +=
-            fine;
-
-
-        if (
-            typeof money !==
-            "undefined"
-        ) {
-
-            money -=
-                fine;
-        }
-
-
-        showMessage(
-
-            "🚓 CONTROL: MULTA €" +
-            fine
-
-        );
-
-    } else {
-
-        showMessage(
-            "🚓 CONTROL SUPERADO"
-        );
-    }
-}
-
-
-// ----------------------------------------------------------
-// GENERAR CONTROLES
-// ----------------------------------------------------------
-
-function createPhase4Checkpoints() {
-
-    createPoliceCheckpoint(
-        6800,
-        3950
-    );
-}
-
-
-// ----------------------------------------------------------
-// HUD DE NAVEGACIÓN
-// ----------------------------------------------------------
-
-function drawNavigationHUD() {
-
-    const width =
-        330;
-
-
-    const height =
-        phase4.navigationActive
-            ? 120
-            : 75;
-
-
-    const x =
-        canvas.width / 2 -
-        width / 2;
-
-
-    const y =
-        canvas.height -
-        height -
-        25;
-
-
-    ctx.fillStyle =
-        "rgba(5,10,14,0.90)";
-
-
-    ctx.fillRect(
-        x,
-        y,
-        width,
-        height
-    );
-
-
-    ctx.strokeStyle =
-        "rgba(255,255,255,0.2)";
-
-
-    ctx.strokeRect(
-        x,
-        y,
-        width,
-        height
-    );
-
-
-    ctx.fillStyle =
-        "#aaa";
-
-
-    ctx.font =
-        "12px Arial";
-
-
-    ctx.fillText(
-        "CARRETERA",
-        x + 15,
-        y + 22
-    );
-
-
-    ctx.fillStyle =
-        "#fff";
-
-
-    ctx.font =
-        "bold 16px Arial";
-
-
-    ctx.fillText(
-        phase4.currentRoad,
-        x + 15,
-        y + 43
-    );
-
-
-    ctx.fillStyle =
-        "#aaa";
-
-
-    ctx.font =
-        "12px Arial";
-
-
-    ctx.fillText(
-        "LÍMITE",
-        x + 190,
-        y + 22
-    );
-
-
-    ctx.fillStyle =
-        "#fff";
-
-
-    ctx.font =
-        "bold 20px Arial";
-
-
-    ctx.fillText(
-        phase4.speedLimit +
-        " km/h",
-        x + 190,
-        y + 43
-    );
-
-
-    if (
-        phase4.navigationActive &&
-        phase4.destination
-    ) {
-
-        ctx.fillStyle =
-            "#00e5ff";
-
-
-        ctx.font =
-            "bold 15px Arial";
-
-
-        ctx.fillText(
-
-            "🧭 " +
-            phase4.destination.name,
-
-            x + 15,
-            y + 70
-
-        );
-
-
-        ctx.fillStyle =
-            "#fff";
-
-
-        ctx.font =
-            "13px Arial";
-
-
-        const km =
-            (
-                phase4.distanceToDestination /
-                100
-            ).toFixed(1);
-
-
-        ctx.fillText(
-
-            "Distancia: " +
-            km +
-            " km",
-
-            x + 15,
-            y + 94
-
-        );
-    }
-
-
-    ctx.fillStyle =
-        "#aaa";
-
-
-    ctx.font =
-        "11px Arial";
-
-
-    ctx.fillText(
-
-        "N = nuevo destino",
-
-        x + 190,
-        y + 72
-
-    );
-
-
-    ctx.fillText(
-
-        "M = mapa",
-
-        x + 190,
-        y + 91
-
-    );
-}
-
-
-// ----------------------------------------------------------
-// HUD DE MULTAS
-// ----------------------------------------------------------
-
-function drawFineHUD() {
-
-    const x =
-        canvas.width -
-        200;
-
-
-    const y =
-        canvas.height -
-        80;
-
-
-    ctx.fillStyle =
-        "rgba(0,0,0,0.65)";
-
-
-    ctx.fillRect(
-        x,
-        y,
-        180,
-        45
-    );
-
-
-    ctx.fillStyle =
-        "#fff";
-
-
-    ctx.font =
-        "12px Arial";
-
-
-    ctx.fillText(
-        "MULTAS",
-        x + 10,
-        y + 17
-    );
-
-
-    ctx.font =
-        "bold 16px Arial";
-
-
-    ctx.fillText(
-
-        "€" +
-        phase4.fines,
-
-        x + 80,
-        y + 18
-
-    );
-}
-
-
-// ----------------------------------------------------------
-// INTEGRACIÓN CON EL MINIMAPA
-// ----------------------------------------------------------
-
-// Guardamos la función original
-// para no destruir las Fases anteriores.
-
-const phase4_originalDrawMinimap =
-    typeof drawMinimap ===
-    "function"
-        ? drawMinimap
-        : null;
-
-
-if (
-    phase4_originalDrawMinimap
-) {
-
-    drawMinimap =
-        function() {
-
-            phase4_originalDrawMinimap();
-
-            drawNavigationOnMinimap();
-
-        };
-}
-
-
-// ----------------------------------------------------------
-// INTEGRACIÓN CON EL HUD
-// ----------------------------------------------------------
-
-const phase4_originalDrawHUD =
-    typeof drawHUD ===
-    "function"
-        ? drawHUD
-        : null;
-
-
-if (
-    phase4_originalDrawHUD
-) {
-
-    drawHUD =
-        function() {
-
-            phase4_originalDrawHUD();
-
-            drawNavigationHUD();
-
-            drawFineHUD();
-
-        };
-}
-
-
-// ----------------------------------------------------------
-// INTEGRACIÓN CON EL RENDER
-// ----------------------------------------------------------
-
-const phase4_originalDrawTruck =
-    typeof drawTruck ===
-    "function"
-        ? drawTruck
-        : null;
-
-
-// ----------------------------------------------------------
-// ACTUALIZACIÓN DE FASE 4
-// ----------------------------------------------------------
-
-function updatePhase4() {
-
-    updateCurrentRoad();
-
-    updateDistanceToDestination();
-
-    checkSpeedLimit();
-
-    checkDestinationArrival();
-
-    updatePoliceCheckpoint();
-}
-
-
-// ----------------------------------------------------------
-// DESTINO INICIAL
-// ----------------------------------------------------------
-
-function startPhase4Navigation() {
-
-    if (
-        !phase4.navigationActive
-    ) {
-
-        chooseRandomDestination();
-    }
-}
-
-
-// ----------------------------------------------------------
-// CONTROLES FASE 4
-// ----------------------------------------------------------
-
-document.addEventListener(
-    "keydown",
-    function(event) {
-
-        const key =
-            event.key.toLowerCase();
-
-
-        // NUEVO DESTINO
-
-        if (
-            key === "n"
-        ) {
-
-            chooseRandomDestination();
-
-            return;
-        }
-
-
-        // MAPA
-
-        if (
-            key === "m"
-        ) {
-
-            if (
-                typeof toggleMap ===
-                "function"
-            ) {
-
-                toggleMap();
-            }
-
-            return;
-        }
-    }
-);
-
-
-// ----------------------------------------------------------
-// CONTROLES INICIALES
-// ----------------------------------------------------------
-
-createPhase4Checkpoints();
-
-
-// ----------------------------------------------------------
-// MENSAJE DE INICIO
-// ----------------------------------------------------------
-
-showMessage(
-    "FASE 4 CARGADA - Pulsa N para elegir destino"
-);
-
-
-// ==========================================================
-// FIN DE LA FASE 4
-// ==========================================================
+gameLoop();
