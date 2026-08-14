@@ -5087,3 +5087,1382 @@ showMessage(
 requestAnimationFrame(
     gameLoop
 );
+// ==========================================================
+// FASE 4
+// NAVEGACIÓN + LÍMITES + MULTAS + DESTINO + RUTA
+// ==========================================================
+
+// ----------------------------------------------------------
+// ESTADO DE LA FASE 4
+// ----------------------------------------------------------
+
+let phase4 = {
+
+    currentRoad: "Fuera de carretera",
+
+    speedLimit: 50,
+
+    distanceToDestination: 0,
+
+    navigationActive: false,
+
+    destination: null,
+
+    route: [],
+
+    fines: 0,
+
+    lastFineTime: 0,
+
+    messageTimer: 0,
+
+    policeActive: false,
+
+    checkpointActive: false
+};
+
+
+// ----------------------------------------------------------
+// DESTINOS
+// ----------------------------------------------------------
+
+const phase4Destinations = [
+
+    {
+        name: "Madrid",
+        x: 5000,
+        y: 3750
+    },
+
+    {
+        name: "Toledo",
+        x: 3900,
+        y: 4700
+    },
+
+    {
+        name: "Valencia",
+        x: 7900,
+        y: 3900
+    },
+
+    {
+        name: "Cuenca",
+        x: 6500,
+        y: 4700
+    },
+
+    {
+        name: "Zaragoza",
+        x: 8300,
+        y: 1700
+    },
+
+    {
+        name: "Segovia",
+        x: 3700,
+        y: 2200
+    },
+
+    {
+        name: "Ávila",
+        x: 2500,
+        y: 3400
+    }
+];
+
+
+// ----------------------------------------------------------
+// DISTANCIA
+// ----------------------------------------------------------
+
+function phase4Distance(
+    x1,
+    y1,
+    x2,
+    y2
+) {
+
+    return Math.sqrt(
+
+        Math.pow(
+            x2 - x1,
+            2
+        )
+
+        +
+
+        Math.pow(
+            y2 - y1,
+            2
+        )
+    );
+}
+
+
+// ----------------------------------------------------------
+// CARRETERA MÁS CERCANA
+// ----------------------------------------------------------
+
+function getNearestRoad() {
+
+    let nearest =
+        null;
+
+    let nearestDistance =
+        Infinity;
+
+
+    for (
+        const road of roads
+    ) {
+
+        for (
+            const point of road.points
+        ) {
+
+            const d =
+                phase4Distance(
+
+                    truck.x,
+                    truck.y,
+
+                    point.x,
+                    point.y
+                );
+
+
+            if (
+                d <
+                nearestDistance
+            ) {
+
+                nearestDistance =
+                    d;
+
+                nearest =
+                    road;
+            }
+        }
+    }
+
+
+    return nearest;
+}
+
+
+// ----------------------------------------------------------
+// LÍMITE DE VELOCIDAD
+// ----------------------------------------------------------
+
+function getRoadSpeedLimit(
+    road
+) {
+
+    if (!road) {
+
+        return 50;
+    }
+
+
+    switch (
+        road.type
+    ) {
+
+        case "autopista":
+
+            return 120;
+
+
+        case "autovia":
+
+            return 110;
+
+
+        case "nacional":
+
+            return 90;
+
+
+        case "secundaria":
+
+            return 80;
+
+
+        case "montana":
+
+            return 60;
+
+
+        default:
+
+            return 50;
+    }
+}
+
+
+// ----------------------------------------------------------
+// ACTUALIZAR CARRETERA ACTUAL
+// ----------------------------------------------------------
+
+function updateCurrentRoad() {
+
+    const road =
+        getNearestRoad();
+
+
+    if (!road) {
+
+        phase4.currentRoad =
+            "Fuera de carretera";
+
+        phase4.speedLimit =
+            50;
+
+        return;
+    }
+
+
+    phase4.currentRoad =
+        road.name;
+
+
+    phase4.speedLimit =
+        getRoadSpeedLimit(
+            road
+        );
+}
+
+
+// ----------------------------------------------------------
+// DETECTAR EXCESO DE VELOCIDAD
+// ----------------------------------------------------------
+
+function checkSpeedLimit() {
+
+    if (
+        truck.speed <=
+        phase4.speedLimit
+    ) {
+
+        return;
+    }
+
+
+    if (
+        truck.reverse
+    ) {
+
+        return;
+    }
+
+
+    const now =
+        Date.now();
+
+
+    if (
+        now -
+        phase4.lastFineTime
+        <
+        10000
+    ) {
+
+        return;
+    }
+
+
+    const excess =
+        truck.speed -
+        phase4.speedLimit;
+
+
+    if (
+        excess < 10
+    ) {
+
+        return;
+    }
+
+
+    let fine =
+        50;
+
+
+    if (
+        excess >= 20
+    ) {
+
+        fine =
+            150;
+    }
+
+
+    if (
+        excess >= 40
+    ) {
+
+        fine =
+            350;
+    }
+
+
+    if (
+        excess >= 60
+    ) {
+
+        fine =
+            700;
+    }
+
+
+    phase4.fines +=
+        fine;
+
+
+    if (
+        typeof money !==
+        "undefined"
+    ) {
+
+        money -=
+            fine;
+    }
+
+
+    phase4.lastFineTime =
+        now;
+
+
+    showMessage(
+        "🚓 MULTA: €" +
+        fine +
+        " | EXCESO DE VELOCIDAD"
+    );
+}
+
+
+// ----------------------------------------------------------
+// ELEGIR DESTINO
+// ----------------------------------------------------------
+
+function chooseDestination(
+    destination
+) {
+
+    if (!destination) {
+
+        return;
+    }
+
+
+    phase4.destination =
+        destination;
+
+
+    phase4.navigationActive =
+        true;
+
+
+    phase4.route = [
+
+        {
+            x:
+                truck.x,
+
+            y:
+                truck.y
+        },
+
+        {
+            x:
+                destination.x,
+
+            y:
+                destination.y
+        }
+    ];
+
+
+    updateDistanceToDestination();
+
+
+    showMessage(
+
+        "🧭 DESTINO: " +
+        destination.name
+
+    );
+}
+
+
+// ----------------------------------------------------------
+// DESTINO ALEATORIO
+// ----------------------------------------------------------
+
+function chooseRandomDestination() {
+
+    const available =
+        phase4Destinations
+            .filter(
+                function(destination) {
+
+                    return (
+                        phase4Distance(
+
+                            truck.x,
+                            truck.y,
+
+                            destination.x,
+                            destination.y
+
+                        ) > 500
+                    );
+                }
+            );
+
+
+    if (
+        available.length ===
+        0
+    ) {
+
+        return;
+    }
+
+
+    const destination =
+        available[
+            Math.floor(
+                Math.random() *
+                available.length
+            )
+        ];
+
+
+    chooseDestination(
+        destination
+    );
+}
+
+
+// ----------------------------------------------------------
+// DISTANCIA AL DESTINO
+// ----------------------------------------------------------
+
+function updateDistanceToDestination() {
+
+    if (
+        !phase4.destination
+    ) {
+
+        phase4.distanceToDestination =
+            0;
+
+        return;
+    }
+
+
+    phase4.distanceToDestination =
+
+        phase4Distance(
+
+            truck.x,
+            truck.y,
+
+            phase4.destination.x,
+            phase4.destination.y
+        );
+}
+
+
+// ----------------------------------------------------------
+// LLEGADA AL DESTINO
+// ----------------------------------------------------------
+
+function checkDestinationArrival() {
+
+    if (
+        !phase4.navigationActive
+    ) {
+
+        return;
+    }
+
+
+    if (
+        !phase4.destination
+    ) {
+
+        return;
+    }
+
+
+    const distance =
+        phase4.distanceToDestination;
+
+
+    if (
+        distance >
+        120
+    ) {
+
+        return;
+    }
+
+
+    const destinationName =
+        phase4.destination.name;
+
+
+    phase4.navigationActive =
+        false;
+
+
+    phase4.route =
+        [];
+
+
+    phase4.destination =
+        null;
+
+
+    showMessage(
+
+        "🏁 HAS LLEGADO A " +
+        destinationName
+
+    );
+
+
+    // ------------------------------------------------------
+    // COMPATIBILIDAD CON SISTEMA DE TRABAJOS
+    // ------------------------------------------------------
+
+    if (
+        typeof currentJob !==
+        "undefined" &&
+        currentJob
+    ) {
+
+        if (
+            typeof completeCurrentJob ===
+            "function"
+        ) {
+
+            completeCurrentJob();
+        }
+    }
+}
+
+
+// ----------------------------------------------------------
+// RUTA DE NAVEGACIÓN
+// ----------------------------------------------------------
+
+function drawNavigationRoute() {
+
+    if (
+        !phase4.navigationActive
+    ) {
+
+        return;
+    }
+
+
+    if (
+        !phase4.destination
+    ) {
+
+        return;
+    }
+
+
+    const start =
+        worldToScreen(
+
+            truck.x,
+            truck.y
+        );
+
+
+    const destination =
+        worldToScreen(
+
+            phase4.destination.x,
+            phase4.destination.y
+        );
+
+
+    ctx.save();
+
+
+    ctx.strokeStyle =
+        "#00e5ff";
+
+
+    ctx.lineWidth =
+        6;
+
+
+    ctx.setLineDash(
+        [
+            15,
+            10
+        ]
+    );
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(
+        start.x,
+        start.y
+    );
+
+
+    ctx.lineTo(
+        destination.x,
+        destination.y
+    );
+
+
+    ctx.stroke();
+
+
+    ctx.setLineDash([]);
+
+
+    // DESTINO
+
+    ctx.fillStyle =
+        "#00e5ff";
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        destination.x,
+        destination.y,
+        13,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    ctx.strokeStyle =
+        "#ffffff";
+
+
+    ctx.lineWidth =
+        3;
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        destination.x,
+        destination.y,
+        22,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.stroke();
+
+
+    ctx.fillStyle =
+        "#ffffff";
+
+
+    ctx.font =
+        "bold 16px Arial";
+
+
+    ctx.textAlign =
+        "center";
+
+
+    ctx.fillText(
+
+        phase4.destination.name,
+
+        destination.x,
+
+        destination.y - 28
+
+    );
+
+
+    ctx.restore();
+
+
+    ctx.textAlign =
+        "left";
+}
+
+
+// ----------------------------------------------------------
+// RUTA EN MINIMAPA
+// ----------------------------------------------------------
+
+function drawNavigationOnMinimap() {
+
+    if (
+        !phase4.navigationActive
+    ) {
+
+        return;
+    }
+
+
+    if (
+        !phase4.destination
+    ) {
+
+        return;
+    }
+
+
+    const size =
+        230;
+
+
+    const x =
+        canvas.width -
+        size -
+        20;
+
+
+    const y =
+        20;
+
+
+    const scaleX =
+        size /
+        WORLD_WIDTH;
+
+
+    const scaleY =
+        size /
+        WORLD_HEIGHT;
+
+
+    const truckX =
+        x +
+        truck.x *
+        scaleX;
+
+
+    const truckY =
+        y +
+        truck.y *
+        scaleY;
+
+
+    const destinationX =
+        x +
+        phase4.destination.x *
+        scaleX;
+
+
+    const destinationY =
+        y +
+        phase4.destination.y *
+        scaleY;
+
+
+    ctx.save();
+
+
+    ctx.strokeStyle =
+        "#00e5ff";
+
+
+    ctx.lineWidth =
+        3;
+
+
+    ctx.setLineDash(
+        [
+            7,
+            5
+        ]
+    );
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(
+        truckX,
+        truckY
+    );
+
+
+    ctx.lineTo(
+        destinationX,
+        destinationY
+    );
+
+
+    ctx.stroke();
+
+
+    ctx.setLineDash([]);
+
+
+    ctx.fillStyle =
+        "#00e5ff";
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        destinationX,
+        destinationY,
+        5,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+
+    ctx.restore();
+}
+
+
+// ----------------------------------------------------------
+// CONTROL DE POLICÍA
+// ----------------------------------------------------------
+
+function createPoliceCheckpoint(
+    x,
+    y
+) {
+
+    phase4.policeActive =
+        true;
+
+
+    phase4.checkpointActive =
+        true;
+
+
+    phase4.policeX =
+        x;
+
+
+    phase4.policeY =
+        y;
+}
+
+
+function updatePoliceCheckpoint() {
+
+    if (
+        !phase4.checkpointActive
+    ) {
+
+        return;
+    }
+
+
+    const d =
+        phase4Distance(
+
+            truck.x,
+            truck.y,
+
+            phase4.policeX,
+            phase4.policeY
+        );
+
+
+    if (
+        d >
+        100
+    ) {
+
+        return;
+    }
+
+
+    phase4.checkpointActive =
+        false;
+
+
+    if (
+        truck.speed >
+        phase4.speedLimit + 15
+    ) {
+
+        const fine =
+            250;
+
+
+        phase4.fines +=
+            fine;
+
+
+        if (
+            typeof money !==
+            "undefined"
+        ) {
+
+            money -=
+                fine;
+        }
+
+
+        showMessage(
+
+            "🚓 CONTROL: MULTA €" +
+            fine
+
+        );
+
+    } else {
+
+        showMessage(
+            "🚓 CONTROL SUPERADO"
+        );
+    }
+}
+
+
+// ----------------------------------------------------------
+// GENERAR CONTROLES
+// ----------------------------------------------------------
+
+function createPhase4Checkpoints() {
+
+    createPoliceCheckpoint(
+        6800,
+        3950
+    );
+}
+
+
+// ----------------------------------------------------------
+// HUD DE NAVEGACIÓN
+// ----------------------------------------------------------
+
+function drawNavigationHUD() {
+
+    const width =
+        330;
+
+
+    const height =
+        phase4.navigationActive
+            ? 120
+            : 75;
+
+
+    const x =
+        canvas.width / 2 -
+        width / 2;
+
+
+    const y =
+        canvas.height -
+        height -
+        25;
+
+
+    ctx.fillStyle =
+        "rgba(5,10,14,0.90)";
+
+
+    ctx.fillRect(
+        x,
+        y,
+        width,
+        height
+    );
+
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.2)";
+
+
+    ctx.strokeRect(
+        x,
+        y,
+        width,
+        height
+    );
+
+
+    ctx.fillStyle =
+        "#aaa";
+
+
+    ctx.font =
+        "12px Arial";
+
+
+    ctx.fillText(
+        "CARRETERA",
+        x + 15,
+        y + 22
+    );
+
+
+    ctx.fillStyle =
+        "#fff";
+
+
+    ctx.font =
+        "bold 16px Arial";
+
+
+    ctx.fillText(
+        phase4.currentRoad,
+        x + 15,
+        y + 43
+    );
+
+
+    ctx.fillStyle =
+        "#aaa";
+
+
+    ctx.font =
+        "12px Arial";
+
+
+    ctx.fillText(
+        "LÍMITE",
+        x + 190,
+        y + 22
+    );
+
+
+    ctx.fillStyle =
+        "#fff";
+
+
+    ctx.font =
+        "bold 20px Arial";
+
+
+    ctx.fillText(
+        phase4.speedLimit +
+        " km/h",
+        x + 190,
+        y + 43
+    );
+
+
+    if (
+        phase4.navigationActive &&
+        phase4.destination
+    ) {
+
+        ctx.fillStyle =
+            "#00e5ff";
+
+
+        ctx.font =
+            "bold 15px Arial";
+
+
+        ctx.fillText(
+
+            "🧭 " +
+            phase4.destination.name,
+
+            x + 15,
+            y + 70
+
+        );
+
+
+        ctx.fillStyle =
+            "#fff";
+
+
+        ctx.font =
+            "13px Arial";
+
+
+        const km =
+            (
+                phase4.distanceToDestination /
+                100
+            ).toFixed(1);
+
+
+        ctx.fillText(
+
+            "Distancia: " +
+            km +
+            " km",
+
+            x + 15,
+            y + 94
+
+        );
+    }
+
+
+    ctx.fillStyle =
+        "#aaa";
+
+
+    ctx.font =
+        "11px Arial";
+
+
+    ctx.fillText(
+
+        "N = nuevo destino",
+
+        x + 190,
+        y + 72
+
+    );
+
+
+    ctx.fillText(
+
+        "M = mapa",
+
+        x + 190,
+        y + 91
+
+    );
+}
+
+
+// ----------------------------------------------------------
+// HUD DE MULTAS
+// ----------------------------------------------------------
+
+function drawFineHUD() {
+
+    const x =
+        canvas.width -
+        200;
+
+
+    const y =
+        canvas.height -
+        80;
+
+
+    ctx.fillStyle =
+        "rgba(0,0,0,0.65)";
+
+
+    ctx.fillRect(
+        x,
+        y,
+        180,
+        45
+    );
+
+
+    ctx.fillStyle =
+        "#fff";
+
+
+    ctx.font =
+        "12px Arial";
+
+
+    ctx.fillText(
+        "MULTAS",
+        x + 10,
+        y + 17
+    );
+
+
+    ctx.font =
+        "bold 16px Arial";
+
+
+    ctx.fillText(
+
+        "€" +
+        phase4.fines,
+
+        x + 80,
+        y + 18
+
+    );
+}
+
+
+// ----------------------------------------------------------
+// INTEGRACIÓN CON EL MINIMAPA
+// ----------------------------------------------------------
+
+// Guardamos la función original
+// para no destruir las Fases anteriores.
+
+const phase4_originalDrawMinimap =
+    typeof drawMinimap ===
+    "function"
+        ? drawMinimap
+        : null;
+
+
+if (
+    phase4_originalDrawMinimap
+) {
+
+    drawMinimap =
+        function() {
+
+            phase4_originalDrawMinimap();
+
+            drawNavigationOnMinimap();
+
+        };
+}
+
+
+// ----------------------------------------------------------
+// INTEGRACIÓN CON EL HUD
+// ----------------------------------------------------------
+
+const phase4_originalDrawHUD =
+    typeof drawHUD ===
+    "function"
+        ? drawHUD
+        : null;
+
+
+if (
+    phase4_originalDrawHUD
+) {
+
+    drawHUD =
+        function() {
+
+            phase4_originalDrawHUD();
+
+            drawNavigationHUD();
+
+            drawFineHUD();
+
+        };
+}
+
+
+// ----------------------------------------------------------
+// INTEGRACIÓN CON EL RENDER
+// ----------------------------------------------------------
+
+const phase4_originalDrawTruck =
+    typeof drawTruck ===
+    "function"
+        ? drawTruck
+        : null;
+
+
+// ----------------------------------------------------------
+// ACTUALIZACIÓN DE FASE 4
+// ----------------------------------------------------------
+
+function updatePhase4() {
+
+    updateCurrentRoad();
+
+    updateDistanceToDestination();
+
+    checkSpeedLimit();
+
+    checkDestinationArrival();
+
+    updatePoliceCheckpoint();
+}
+
+
+// ----------------------------------------------------------
+// DESTINO INICIAL
+// ----------------------------------------------------------
+
+function startPhase4Navigation() {
+
+    if (
+        !phase4.navigationActive
+    ) {
+
+        chooseRandomDestination();
+    }
+}
+
+
+// ----------------------------------------------------------
+// CONTROLES FASE 4
+// ----------------------------------------------------------
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        const key =
+            event.key.toLowerCase();
+
+
+        // NUEVO DESTINO
+
+        if (
+            key === "n"
+        ) {
+
+            chooseRandomDestination();
+
+            return;
+        }
+
+
+        // MAPA
+
+        if (
+            key === "m"
+        ) {
+
+            if (
+                typeof toggleMap ===
+                "function"
+            ) {
+
+                toggleMap();
+            }
+
+            return;
+        }
+    }
+);
+
+
+// ----------------------------------------------------------
+// CONTROLES INICIALES
+// ----------------------------------------------------------
+
+createPhase4Checkpoints();
+
+
+// ----------------------------------------------------------
+// MENSAJE DE INICIO
+// ----------------------------------------------------------
+
+showMessage(
+    "FASE 4 CARGADA - Pulsa N para elegir destino"
+);
+
+
+// ==========================================================
+// FIN DE LA FASE 4
+// ==========================================================
