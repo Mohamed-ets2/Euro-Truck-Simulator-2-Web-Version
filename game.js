@@ -221,9 +221,9 @@ const truck = {
 
     cargoWeight: 0,
 
-    maxSpeed: 130,
+    maxSpeed: 240,
 
-    speedLimiter: 130,
+    speedLimiter: 250,
 
     brakePower: 1.2,
 
@@ -265,17 +265,17 @@ const gears = {
     },
 
     6: {
-        maxSpeed: 98,
+        maxSpeed: 108,
         acceleration: 0.29
     },
 
     7: {
-        maxSpeed: 115,
+        maxSpeed: 185,
         acceleration: 0.23
     },
 
     8: {
-        maxSpeed: 130,
+        maxSpeed: 240,
         acceleration: 0.18
     }
 };
@@ -645,41 +645,61 @@ function createTraffic() {
 
     for (let i = 0; i < 28; i++) {
 
-        const road =
-            roads[
-                Math.floor(
-                    Math.random() * roads.length
-                )
-            ];
+        let x;
+        let y;
+        let safe = false;
 
-        const point =
-            road.points[
-                Math.floor(
-                    Math.random() *
-                    road.points.length
-                )
-            ];
+        // Buscar una posición suficientemente
+        // alejada del camión
+        for (let attempt = 0; attempt < 100; attempt++) {
+
+            x = Math.random() * WORLD_WIDTH;
+            y = Math.random() * WORLD_HEIGHT;
+
+            const distanceFromTruck =
+                Math.hypot(
+                    x - truck.x,
+                    y - truck.y
+                );
+
+            if (distanceFromTruck > 700) {
+                safe = true;
+                break;
+            }
+        }
+
+        if (!safe) {
+            continue;
+        }
 
         traffic.push({
 
-            x: point.x + (Math.random() * 60 - 30),
+            x: x,
 
-            y: point.y + (Math.random() * 60 - 30),
+            y: y,
 
-            angle: Math.random() * Math.PI * 2,
+            angle:
+                Math.random() *
+                Math.PI * 2,
 
-            speed: 0.5 + Math.random() * 1.2,
+            speed:
+                0.5 +
+                Math.random() * 1.2,
 
             color:
                 colors[
                     Math.floor(
-                        Math.random() * colors.length
+                        Math.random() *
+                        colors.length
                     )
-                ]
+                ],
+
+            // evita que se considere
+            // una colisión inmediatamente
+            collisionCooldown: 300
         });
     }
 }
-
 createTraffic();
 
 
