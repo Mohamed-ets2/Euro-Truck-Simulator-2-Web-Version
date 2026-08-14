@@ -3,15 +3,12 @@
 /*
 ============================================================
  TRUCK DRIVER
- FASE 1 - SISTEMA DE CONDUCCIÓN
+ FASE 2 - MAPA COMPLETO
 ============================================================
 
- INCLUYE:
+ MANTIENE:
 
- - Camión
- - Física
- - Peso
- - Carga
+ - Física del camión
  - Marchas 1-8
  - Marcha atrás
  - RPM
@@ -19,9 +16,30 @@
  - Freno motor
  - Combustible
  - Daños
- - Limitador
+ - Peso/carga
  - HUD
  - Controles
+
+ AÑADE:
+
+ - Mapa grande
+ - Autopistas
+ - Autovías
+ - Nacionales
+ - Secundarias
+ - Carreteras de montaña
+ - Ciudades
+ - Pueblos
+ - Polígonos industriales
+ - Gasolineras
+ - Talleres
+ - Áreas de descanso
+ - Cruces
+ - Rotondas
+ - Señales
+ - Nombres de lugares
+ - Minimapa
+ - GPS básico
 ============================================================
 */
 
@@ -34,16 +52,14 @@ const canvas = document.getElementById("gameCanvas");
 
 if (!canvas) {
     throw new Error(
-        "No existe <canvas id=\"gameCanvas\"> en index.html"
+        'No existe <canvas id="gameCanvas"> en index.html'
     );
 }
 
 const ctx = canvas.getContext("2d");
 
 if (!ctx) {
-    throw new Error(
-        "No se pudo crear el contexto 2D."
-    );
+    throw new Error("No se pudo crear el contexto 2D.");
 }
 
 
@@ -52,17 +68,13 @@ if (!ctx) {
 // ==========================================================
 
 function resizeCanvas() {
-
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
 
 resizeCanvas();
 
-window.addEventListener(
-    "resize",
-    resizeCanvas
-);
+window.addEventListener("resize", resizeCanvas);
 
 
 // ==========================================================
@@ -70,7 +82,6 @@ window.addEventListener(
 // ==========================================================
 
 const keys = {
-
     w: false,
     s: false,
     a: false,
@@ -78,124 +89,73 @@ const keys = {
 };
 
 
-window.addEventListener(
-    "keydown",
-    function (event) {
+window.addEventListener("keydown", function(event) {
 
-        const key =
-            event.key.toLowerCase();
+    const key = event.key.toLowerCase();
 
+    if (key === "w") keys.w = true;
+    if (key === "s") keys.s = true;
+    if (key === "a") keys.a = true;
+    if (key === "d") keys.d = true;
 
-        if (key === "w") {
-            keys.w = true;
-        }
-
-
-        if (key === "s") {
-            keys.s = true;
-        }
-
-
-        if (key === "a") {
-            keys.a = true;
-        }
-
-
-        if (key === "d") {
-            keys.d = true;
-        }
-
-
-        // SUBIR MARCHA
-        if (
-            key === "+" ||
-            key === "="
-        ) {
-
-            changeGear(1);
-        }
-
-
-        // BAJAR MARCHA
-        if (key === "-") {
-
-            changeGear(-1);
-        }
-
-
-        // MARCHA ATRÁS
-        if (key === "b") {
-
-            toggleReverse();
-        }
-
-
-        // REPOSTAR
-        if (key === "r") {
-
-            refuel();
-        }
-
-
-        // EVITAR SCROLL
-        if (
-            [
-                "w",
-                "a",
-                "s",
-                "d",
-                "+",
-                "=",
-                "-",
-                "b",
-                "r"
-            ].includes(key)
-        ) {
-
-            event.preventDefault();
-        }
-
+    if (key === "+" || key === "=") {
+        changeGear(1);
     }
-);
 
-
-window.addEventListener(
-    "keyup",
-    function (event) {
-
-        const key =
-            event.key.toLowerCase();
-
-
-        if (key === "w") {
-            keys.w = false;
-        }
-
-
-        if (key === "s") {
-            keys.s = false;
-        }
-
-
-        if (key === "a") {
-            keys.a = false;
-        }
-
-
-        if (key === "d") {
-            keys.d = false;
-        }
-
+    if (key === "-") {
+        changeGear(-1);
     }
-);
+
+    if (key === "b") {
+        toggleReverse();
+    }
+
+    if (key === "r") {
+        refuel();
+    }
+
+    if (key === "m") {
+        toggleMap();
+    }
+
+    if (
+        [
+            "w",
+            "a",
+            "s",
+            "d",
+            "+",
+            "=",
+            "-",
+            "b",
+            "r",
+            "m"
+        ].includes(key)
+    ) {
+        event.preventDefault();
+    }
+
+});
+
+
+window.addEventListener("keyup", function(event) {
+
+    const key = event.key.toLowerCase();
+
+    if (key === "w") keys.w = false;
+    if (key === "s") keys.s = false;
+    if (key === "a") keys.a = false;
+    if (key === "d") keys.d = false;
+
+});
 
 
 // ==========================================================
 // MUNDO
 // ==========================================================
 
-const WORLD_WIDTH = 7000;
-const WORLD_HEIGHT = 5000;
+const WORLD_WIDTH = 10000;
+const WORLD_HEIGHT = 7500;
 
 
 // ==========================================================
@@ -203,7 +163,6 @@ const WORLD_HEIGHT = 5000;
 // ==========================================================
 
 const camera = {
-
     x: WORLD_WIDTH / 2,
     y: WORLD_HEIGHT / 2
 };
@@ -215,74 +174,36 @@ const camera = {
 
 const truck = {
 
-    x: WORLD_WIDTH / 2,
-    y: WORLD_HEIGHT / 2,
+    x: 5000,
+    y: 3750,
 
     angle: 0,
-
-    // ----------------------------------------------
-    // VELOCIDAD
-    // ----------------------------------------------
 
     speed: 0,
 
     maxSpeed: 130,
 
-    // ----------------------------------------------
-    // ACELERACIÓN
-    // ----------------------------------------------
-
-    acceleration: 0,
-
-    // ----------------------------------------------
-    // FRENOS
-    // ----------------------------------------------
-
     brakePower: 1.35,
 
     engineBrake: 0.025,
 
-    // ----------------------------------------------
-    // DIRECCIÓN
-    // ----------------------------------------------
-
     steering: 0.035,
-
-    // ----------------------------------------------
-    // COMBUSTIBLE
-    // ----------------------------------------------
 
     fuel: 100,
 
     fuelCapacity: 100,
 
-    // ----------------------------------------------
-    // DAÑOS
-    // ----------------------------------------------
-
     damage: 0,
 
     maxDamage: 100,
-
-    // ----------------------------------------------
-    // PESO
-    // ----------------------------------------------
 
     emptyWeight: 8000,
 
     cargoWeight: 0,
 
-    // ----------------------------------------------
-    // MARCHA
-    // ----------------------------------------------
-
     gear: 1,
 
     reverse: false,
-
-    // ----------------------------------------------
-    // RPM
-    // ----------------------------------------------
 
     rpm: 800,
 
@@ -291,10 +212,6 @@ const truck = {
     maxRPM: 2200,
 
     idleRPM: 800,
-
-    // ----------------------------------------------
-    // LIMITADOR
-    // ----------------------------------------------
 
     speedLimiter: 130
 
@@ -306,11 +223,8 @@ const truck = {
 // ==========================================================
 
 const cargo = {
-
     name: "Sin carga",
-
     weight: 0,
-
     loaded: false
 };
 
@@ -365,7 +279,29 @@ const gears = {
 
 
 // ==========================================================
-// MASA TOTAL
+// UTILIDADES
+// ==========================================================
+
+function distance(x1, y1, x2, y2) {
+
+    return Math.hypot(
+        x2 - x1,
+        y2 - y1
+    );
+}
+
+
+function clamp(value, min, max) {
+
+    return Math.max(
+        min,
+        Math.min(max, value)
+    );
+}
+
+
+// ==========================================================
+// PESO
 // ==========================================================
 
 function getTotalWeight() {
@@ -377,85 +313,43 @@ function getTotalWeight() {
 }
 
 
-// ==========================================================
-// FACTOR DE PESO
-// ==========================================================
-
 function getWeightFactor() {
 
-    const weight =
-        getTotalWeight();
-
-
-    /*
-    8000 kg = factor 1
-    20000 kg = aproximadamente 0.55
-    40000 kg = aproximadamente 0.30
-    */
+    const weight = getTotalWeight();
 
     const factor =
-        8000 /
-        weight;
+        8000 / weight;
 
-
-    return Math.max(
+    return clamp(
+        factor,
         0.25,
-        Math.min(
-            1,
-            factor
-        )
+        1
     );
 }
 
 
 // ==========================================================
-// CAMBIAR MARCHA
+// MARCHAS
 // ==========================================================
 
 function changeGear(direction) {
 
-    // No se puede cambiar a marchas normales
-    // estando en R
     if (truck.reverse) {
 
         showMessage(
-            "Pulsa B para salir de la marcha atrás."
+            "Pulsa B para salir de R."
         );
 
         return;
     }
 
-
-    // Velocidad demasiado alta para una marcha
-    // inferior: impedimos cambios destructivos
-    if (
-        direction < 0 &&
-        truck.gear === 1
-    ) {
-
-        return;
-    }
-
-
     truck.gear += direction;
 
-
-    // LIMITES
-    if (
-        truck.gear < 1
-    ) {
-
-        truck.gear = 1;
-    }
-
-
-    if (
-        truck.gear > 8
-    ) {
-
-        truck.gear = 8;
-    }
-
+    truck.gear = clamp(
+        truck.gear,
+        1,
+        8
+    );
 
     showMessage(
         "MARCHA " +
@@ -464,20 +358,9 @@ function changeGear(direction) {
 }
 
 
-// ==========================================================
-// MARCHA ATRÁS
-// ==========================================================
-
 function toggleReverse() {
 
-    /*
-    No permitimos cambiar a R mientras
-    el camión está moviéndose rápido.
-    */
-
-    if (
-        truck.speed > 3
-    ) {
+    if (truck.speed > 3) {
 
         showMessage(
             "Detén el camión antes de poner R."
@@ -486,10 +369,8 @@ function toggleReverse() {
         return;
     }
 
-
     truck.reverse =
         !truck.reverse;
-
 
     if (truck.reverse) {
 
@@ -516,52 +397,29 @@ function toggleReverse() {
 
 function updateRPM() {
 
-    if (
-        truck.reverse
-    ) {
-
-        /*
-        RPM en marcha atrás
-        */
+    if (truck.reverse) {
 
         const targetRPM =
             truck.idleRPM +
-            truck.speed *
-            35;
-
+            truck.speed * 35;
 
         truck.rpm +=
             (
                 targetRPM -
                 truck.rpm
-            ) *
-            0.08;
+            ) * 0.08;
 
         return;
     }
-
 
     const gear =
-        gears[
-            truck.gear
-        ];
+        gears[truck.gear];
 
-
-    if (!gear) {
-
-        return;
-    }
-
-
-    /*
-    RPM aproximadas según velocidad
-    y marcha.
-    */
+    if (!gear) return;
 
     const ratio =
         truck.speed /
         gear.maxSpeed;
-
 
     let targetRPM =
         truck.minRPM +
@@ -571,43 +429,25 @@ function updateRPM() {
             truck.minRPM
         );
 
-
-    /*
-    Acelerando sube algo más
-    */
-
     if (keys.w) {
-
         targetRPM += 150;
     }
 
-
-    /*
-    Frenando baja
-    */
-
     if (keys.s) {
-
         targetRPM -= 100;
     }
 
-
-    targetRPM =
-        Math.max(
-            truck.minRPM,
-            Math.min(
-                truck.maxRPM,
-                targetRPM
-            )
-        );
-
+    targetRPM = clamp(
+        targetRPM,
+        truck.minRPM,
+        truck.maxRPM
+    );
 
     truck.rpm +=
         (
             targetRPM -
             truck.rpm
-        ) *
-        0.12;
+        ) * 0.12;
 }
 
 
@@ -617,153 +457,83 @@ function updateRPM() {
 
 function updateAcceleration() {
 
-    if (
-        truck.reverse
-    ) {
+    if (truck.fuel <= 0) {
+        return;
+    }
 
-        /*
-        La marcha atrás tiene
-        menos potencia.
-        */
+    if (truck.reverse) {
 
         if (keys.w) {
 
-            const weightFactor =
-                getWeightFactor();
-
-
             truck.speed +=
                 0.38 *
-                weightFactor;
+                getWeightFactor();
         }
 
-
         return;
     }
-
 
     const gear =
-        gears[
-            truck.gear
-        ];
+        gears[truck.gear];
 
-
-    if (!gear) {
-
-        return;
-    }
-
+    if (!gear) return;
 
     if (keys.w) {
 
-        const weightFactor =
-            getWeightFactor();
-
-
-        /*
-        Aceleración dependiente de:
-        - marcha
-        - peso
-        - RPM
-        */
-
         let power =
             gear.acceleration *
-            weightFactor;
+            getWeightFactor();
 
-
-        /*
-        El motor pierde fuerza
-        cerca del límite de RPM.
-        */
-
-        if (
-            truck.rpm >
-            2000
-        ) {
-
+        if (truck.rpm > 2000) {
             power *= 0.65;
         }
 
-
-        if (
-            truck.rpm <
-            900
-        ) {
-
+        if (truck.rpm < 900) {
             power *= 0.70;
         }
 
-
-        truck.speed +=
-            power;
+        truck.speed += power;
     }
 }
 
 
 // ==========================================================
-// FRENADO
+// FRENOS
 // ==========================================================
 
 function updateBrakes() {
 
-    if (
-        keys.s
-    ) {
+    if (!keys.s) return;
 
-        truck.speed -=
-            truck.brakePower;
+    truck.speed -=
+        truck.brakePower;
 
-
-        /*
-        Freno motor adicional.
-        */
-
-        truck.speed -=
-            truck.engineBrake *
-            (
-                1 +
-                truck.gear *
-                0.3
-            );
-    }
+    truck.speed -=
+        truck.engineBrake *
+        (
+            1 +
+            truck.gear * 0.3
+        );
 }
 
 
 // ==========================================================
-// FÍSICA NATURAL
+// RESISTENCIA
 // ==========================================================
 
 function applyNaturalResistance() {
 
-    if (
-        !keys.w &&
-        !keys.s
-    ) {
+    if (!keys.w && !keys.s) {
 
-        /*
-        Resistencia aerodinámica
-        y rodadura.
-        */
+        truck.speed *= 0.992;
 
-        truck.speed *=
-            0.992;
-
-
-        /*
-        Freno motor.
-        */
-
-        if (
-            truck.speed > 0
-        ) {
+        if (truck.speed > 0) {
 
             truck.speed -=
                 truck.engineBrake *
                 (
                     1 +
-                    truck.gear *
-                    0.15
+                    truck.gear * 0.15
                 );
         }
     }
@@ -771,32 +541,25 @@ function applyNaturalResistance() {
 
 
 // ==========================================================
-// LÍMITES DE VELOCIDAD
+// VELOCIDAD MÁXIMA
 // ==========================================================
 
 function applySpeedLimits() {
 
     let maximum;
 
-
-    if (
-        truck.reverse
-    ) {
+    if (truck.reverse) {
 
         maximum = 25;
 
     } else {
 
         const gear =
-            gears[
-                truck.gear
-            ];
-
+            gears[truck.gear];
 
         maximum =
             gear.maxSpeed;
     }
-
 
     maximum =
         Math.min(
@@ -804,21 +567,11 @@ function applySpeedLimits() {
             truck.speedLimiter
         );
 
-
-    if (
-        truck.speed >
-        maximum
-    ) {
-
-        truck.speed =
-            maximum;
+    if (truck.speed > maximum) {
+        truck.speed = maximum;
     }
 
-
-    if (
-        truck.speed < 0
-    ) {
-
+    if (truck.speed < 0) {
         truck.speed = 0;
     }
 }
@@ -830,45 +583,25 @@ function applySpeedLimits() {
 
 function updateSteering() {
 
-    /*
-    Cuanto más rápido, menos
-    giro brusco.
-    */
-
     const speedFactor =
         Math.min(
             1,
-            truck.speed /
-            40
+            truck.speed / 40
         );
-
 
     const steeringAmount =
         truck.steering *
         (
             1 -
-            speedFactor *
-            0.55
+            speedFactor * 0.55
         );
 
-
-    if (
-        keys.a &&
-        truck.speed > 0
-    ) {
-
-        truck.angle -=
-            steeringAmount;
+    if (keys.a && truck.speed > 0) {
+        truck.angle -= steeringAmount;
     }
 
-
-    if (
-        keys.d &&
-        truck.speed > 0
-    ) {
-
-        truck.angle +=
-            steeringAmount;
+    if (keys.d && truck.speed > 0) {
+        truck.angle += steeringAmount;
     }
 }
 
@@ -880,103 +613,52 @@ function updateSteering() {
 function updateMovement() {
 
     let movement =
-        truck.speed *
-        0.23;
+        truck.speed * 0.23;
 
-
-    /*
-    Marcha atrás
-    */
-
-    if (
-        truck.reverse
-    ) {
-
+    if (truck.reverse) {
         movement *= -1;
     }
 
-
     truck.x +=
-        Math.sin(
-            truck.angle
-        ) *
+        Math.sin(truck.angle) *
         movement;
 
-
     truck.y -=
-        Math.cos(
-            truck.angle
-        ) *
+        Math.cos(truck.angle) *
         movement;
 }
 
 
 // ==========================================================
-// LÍMITES DEL MAPA
+// LÍMITES DEL MUNDO
 // ==========================================================
 
 function keepTruckInsideWorld() {
 
-    const margin = 80;
+    const margin = 100;
 
+    if (truck.x < margin) {
+        truck.x = margin;
+        registerDamage(1);
+    }
 
-    if (
-        truck.x <
-        margin
-    ) {
-
+    if (truck.x > WORLD_WIDTH - margin) {
         truck.x =
-            margin;
+            WORLD_WIDTH - margin;
 
-        registerDamage(
-            1
-        );
+        registerDamage(1);
     }
 
-
-    if (
-        truck.x >
-        WORLD_WIDTH -
-        margin
-    ) {
-
-        truck.x =
-            WORLD_WIDTH -
-            margin;
-
-        registerDamage(
-            1
-        );
+    if (truck.y < margin) {
+        truck.y = margin;
+        registerDamage(1);
     }
 
-
-    if (
-        truck.y <
-        margin
-    ) {
-
+    if (truck.y > WORLD_HEIGHT - margin) {
         truck.y =
-            margin;
+            WORLD_HEIGHT - margin;
 
-        registerDamage(
-            1
-        );
-    }
-
-
-    if (
-        truck.y >
-        WORLD_HEIGHT -
-        margin
-    ) {
-
-        truck.y =
-            WORLD_HEIGHT -
-            margin;
-
-        registerDamage(
-            1
-        );
+        registerDamage(1);
     }
 }
 
@@ -987,85 +669,57 @@ function keepTruckInsideWorld() {
 
 function updateFuel() {
 
-    if (
-        truck.speed <= 0
-    ) {
-
-        return;
-    }
-
-
-    /*
-    Cuanto más pesa y más rápido
-    va el camión, más combustible
-    consume.
-    */
+    if (truck.speed <= 0) return;
 
     const weightFactor =
-        getTotalWeight() /
-        8000;
-
+        getTotalWeight() / 8000;
 
     const consumption =
         0.000025 *
         truck.speed *
         weightFactor;
 
-
     truck.fuel -=
         consumption;
 
-
-    if (
-        truck.fuel <
-        0
-    ) {
-
-        truck.fuel = 0;
-    }
-
-
-    /*
-    Sin combustible:
-    no puede acelerar.
-    */
-
-    if (
-        truck.fuel <= 0
-    ) {
-
-        truck.speed *=
-            0.995;
-    }
+    truck.fuel =
+        Math.max(
+            0,
+            truck.fuel
+        );
 }
 
 
-// ==========================================================
-// REPOSTAR
-// ==========================================================
-
 function refuel() {
 
-    if (
-        truck.fuel >=
-        truck.fuelCapacity
-    ) {
-
-        showMessage(
-            "El depósito ya está lleno."
+    const station =
+        getNearestServicePoint(
+            "gasolinera"
         );
 
-        return;
+    if (
+        station &&
+        distance(
+            truck.x,
+            truck.y,
+            station.x,
+            station.y
+        ) < 180
+    ) {
+
+        truck.fuel =
+            truck.fuelCapacity;
+
+        showMessage(
+            "⛽ DEPÓSITO LLENO"
+        );
+
+    } else {
+
+        showMessage(
+            "Acércate a una gasolinera."
+        );
     }
-
-
-    truck.fuel =
-        truck.fuelCapacity;
-
-
-    showMessage(
-        "Depósito lleno."
-    );
 }
 
 
@@ -1073,136 +727,494 @@ function refuel() {
 // DAÑOS
 // ==========================================================
 
-function registerDamage(
-    amount
-) {
+function registerDamage(amount) {
 
-    truck.damage +=
-        amount;
-
+    truck.damage += amount;
 
     truck.damage =
-        Math.min(
-            truck.maxDamage,
-            truck.damage
+        clamp(
+            truck.damage,
+            0,
+            100
         );
-
-
-    if (
-        truck.damage >=
-        100
-    ) {
-
-        truck.speed *=
-            0.5;
-
-
-        showMessage(
-            "¡Camión muy dañado!"
-        );
-    }
 }
 
 
 // ==========================================================
-// SIMULACIÓN DE DAÑOS POR VELOCIDAD
+// MAPA
 // ==========================================================
 
-function updateDamageEffects() {
+const roads = [];
 
-    /*
-    El daño reduce la potencia.
-    */
+const cities = [];
 
-    if (
-        truck.damage > 0
-    ) {
+const villages = [];
 
-        const damageFactor =
-            1 -
-            (
-                truck.damage /
-                100
-            ) *
-            0.35;
+const pointsOfInterest = [];
 
 
-        truck.speed *=
-            damageFactor +
-            (
-                1 -
-                damageFactor
-            ) *
-            0.98;
-    }
+// ==========================================================
+// CREAR CARRETERA
+// ==========================================================
+
+function createRoad(
+    name,
+    type,
+    points,
+    width
+) {
+
+    roads.push({
+
+        name,
+        type,
+        points,
+        width
+
+    });
 }
 
 
 // ==========================================================
-// CÁMARA
+// CIUDADES
 // ==========================================================
 
-function updateCamera() {
+function createCity(
+    name,
+    x,
+    y,
+    size
+) {
 
-    camera.x +=
-        (
-            truck.x -
-            camera.x
-        ) *
-        0.08;
+    cities.push({
 
+        name,
+        x,
+        y,
+        size
 
-    camera.y +=
-        (
-            truck.y -
-            camera.y
-        ) *
-        0.08;
+    });
 }
 
 
 // ==========================================================
-// ACTUALIZACIÓN COMPLETA
+// PUEBLOS
 // ==========================================================
 
-function updateTruck() {
-
-    /*
-    Orden de simulación
-    */
-
-    updateAcceleration();
-
-    updateBrakes();
-
-    applyNaturalResistance();
-
-    applySpeedLimits();
-
-    updateSteering();
-
-    updateMovement();
-
-    keepTruckInsideWorld();
-
-    updateRPM();
-
-    updateFuel();
-
-    updateDamageEffects();
-
-    updateCamera();
-}
-
-
-// ==========================================================
-// WORLD TO SCREEN
-// ==========================================================
-
-function worldToScreen(
+function createVillage(
+    name,
     x,
     y
 ) {
+
+    villages.push({
+
+        name,
+        x,
+        y
+
+    });
+}
+
+
+// ==========================================================
+// PUNTOS DE INTERÉS
+// ==========================================================
+
+function createPOI(
+    name,
+    type,
+    x,
+    y
+) {
+
+    pointsOfInterest.push({
+
+        name,
+        type,
+        x,
+        y
+
+    });
+}
+
+
+// ==========================================================
+// MAPA PRINCIPAL
+// ==========================================================
+
+function buildMap() {
+
+    roads.length = 0;
+    cities.length = 0;
+    villages.length = 0;
+    pointsOfInterest.length = 0;
+
+
+    // ------------------------------------------------------
+    // CIUDADES
+    // ------------------------------------------------------
+
+    createCity(
+        "Madrid",
+        5000,
+        3750,
+        260
+    );
+
+    createCity(
+        "Toledo",
+        3900,
+        4700,
+        170
+    );
+
+    createCity(
+        "Valencia",
+        7900,
+        3900,
+        230
+    );
+
+    createCity(
+        "Cuenca",
+        6500,
+        4700,
+        150
+    );
+
+    createCity(
+        "Guadalajara",
+        6000,
+        2700,
+        150
+    );
+
+    createCity(
+        "Zaragoza",
+        8300,
+        1700,
+        230
+    );
+
+    createCity(
+        "Segovia",
+        3700,
+        2200,
+        140
+    );
+
+    createCity(
+        "Ávila",
+        2500,
+        3400,
+        150
+    );
+
+
+    // ------------------------------------------------------
+    // PUEBLOS
+    // ------------------------------------------------------
+
+    createVillage(
+        "Alcalá",
+        5550,
+        3000
+    );
+
+    createVillage(
+        "Tarancón",
+        5500,
+        4400
+    );
+
+    createVillage(
+        "Aranjuez",
+        4500,
+        4300
+    );
+
+    createVillage(
+        "Ocaña",
+        4300,
+        5000
+    );
+
+    createVillage(
+        "Medina",
+        3100,
+        2500
+    );
+
+    createVillage(
+        "Sacedón",
+        6500,
+        3300
+    );
+
+    createVillage(
+        "Molina",
+        7000,
+        2700
+    );
+
+    createVillage(
+        "Requena",
+        7200,
+        4600
+    );
+
+
+    // ------------------------------------------------------
+    // AUTOPISTA A1
+    // ------------------------------------------------------
+
+    createRoad(
+        "A-1",
+        "autopista",
+        [
+            {x: 5000, y: 3750},
+            {x: 4700, y: 3200},
+            {x: 4200, y: 2600},
+            {x: 3700, y: 2200},
+            {x: 3200, y: 1800}
+        ],
+        70
+    );
+
+
+    // ------------------------------------------------------
+    // AUTOPISTA A2
+    // ------------------------------------------------------
+
+    createRoad(
+        "A-2",
+        "autopista",
+        [
+            {x: 5000, y: 3750},
+            {x: 5800, y: 3000},
+            {x: 6800, y: 2400},
+            {x: 7600, y: 1900},
+            {x: 8300, y: 1700}
+        ],
+        70
+    );
+
+
+    // ------------------------------------------------------
+    // AUTOVÍA A3
+    // ------------------------------------------------------
+
+    createRoad(
+        "A-3",
+        "autovia",
+        [
+            {x: 5000, y: 3750},
+            {x: 6000, y: 3900},
+            {x: 7000, y: 3950},
+            {x: 7900, y: 3900}
+        ],
+        65
+    );
+
+
+    // ------------------------------------------------------
+    // A4
+    // ------------------------------------------------------
+
+    createRoad(
+        "A-4",
+        "autovia",
+        [
+            {x: 5000, y: 3750},
+            {x: 4700, y: 4200},
+            {x: 4500, y: 4500},
+            {x: 3900, y: 4700}
+        ],
+        65
+    );
+
+
+    // ------------------------------------------------------
+    // NACIONAL
+    // ------------------------------------------------------
+
+    createRoad(
+        "N-320",
+        "nacional",
+        [
+            {x: 5000, y: 3750},
+            {x: 5500, y: 3300},
+            {x: 6500, y: 3300},
+            {x: 7000, y: 2700}
+        ],
+        38
+    );
+
+
+    createRoad(
+        "N-400",
+        "nacional",
+        [
+            {x: 3900, y: 4700},
+            {x: 4700, y: 5000},
+            {x: 5500, y: 4400},
+            {x: 6500, y: 4700}
+        ],
+        38
+    );
+
+
+    // ------------------------------------------------------
+    // SECUNDARIAS
+    // ------------------------------------------------------
+
+    createRoad(
+        "CM-40",
+        "secundaria",
+        [
+            {x: 3900, y: 4700},
+            {x: 3500, y: 4400},
+            {x: 3000, y: 4000},
+            {x: 2500, y: 3400}
+        ],
+        25
+    );
+
+
+    createRoad(
+        "CV-25",
+        "secundaria",
+        [
+            {x: 7900, y: 3900},
+            {x: 7400, y: 4300},
+            {x: 7200, y: 4600},
+            {x: 6500, y: 4700}
+        ],
+        25
+    );
+
+
+    createRoad(
+        "GU-900",
+        "secundaria",
+        [
+            {x: 6000, y: 2700},
+            {x: 6500, y: 3300},
+            {x: 7000, y: 2700}
+        ],
+        24
+    );
+
+
+    // ------------------------------------------------------
+    // CARRETERA DE MONTAÑA
+    // ------------------------------------------------------
+
+    createRoad(
+        "M-300",
+        "montaña",
+        [
+            {x: 3200, y: 1800},
+            {x: 2800, y: 1600},
+            {x: 2300, y: 1800},
+            {x: 1900, y: 2200},
+            {x: 1700, y: 2800}
+        ],
+        22
+    );
+
+
+    // ------------------------------------------------------
+    // PUNTOS DE SERVICIO
+    // ------------------------------------------------------
+
+    createPOI(
+        "Gasolinera Madrid",
+        "gasolinera",
+        5200,
+        3900
+    );
+
+    createPOI(
+        "Gasolinera A-3",
+        "gasolinera",
+        6800,
+        3950
+    );
+
+    createPOI(
+        "Gasolinera A-1",
+        "gasolinera",
+        3900,
+        2500
+    );
+
+    createPOI(
+        "Taller Madrid",
+        "taller",
+        4800,
+        3500
+    );
+
+    createPOI(
+        "Taller Valencia",
+        "taller",
+        7750,
+        4100
+    );
+
+    createPOI(
+        "Área de descanso A-3",
+        "descanso",
+        6200,
+        3900
+    );
+
+    createPOI(
+        "Área de descanso A-1",
+        "descanso",
+        3500,
+        2000
+    );
+}
+
+
+buildMap();
+
+
+// ==========================================================
+// MAPA ABIERTO
+// ==========================================================
+
+let fullMap = false;
+
+
+function toggleMap() {
+
+    fullMap =
+        !fullMap;
+
+    if (fullMap) {
+
+        showMessage(
+            "MAPA ABIERTO - Pulsa M para cerrar"
+        );
+
+    } else {
+
+        showMessage(
+            "MAPA CERRADO"
+        );
+    }
+}
+
+
+// ==========================================================
+// CONVERTIR COORDENADAS
+// ==========================================================
+
+function worldToScreen(x, y) {
 
     return {
 
@@ -1221,14 +1233,13 @@ function worldToScreen(
 
 
 // ==========================================================
-// TERRENO
+// DIBUJAR TERRENO
 // ==========================================================
 
 function drawWorld() {
 
     ctx.fillStyle =
-        "#647b58";
-
+        "#536d4c";
 
     ctx.fillRect(
         0,
@@ -1238,27 +1249,19 @@ function drawWorld() {
     );
 
 
-    /*
-    Cuadrícula sencilla para
-    visualizar el movimiento.
-    */
+    // Textura del terreno
 
     ctx.strokeStyle =
-        "rgba(255,255,255,0.08)";
-
+        "rgba(255,255,255,0.025)";
 
     ctx.lineWidth = 1;
 
-
-    const gridSize =
-        120;
-
+    const grid = 120;
 
     for (
-        let x = -100;
-        x <
-        canvas.width + 100;
-        x += gridSize
+        let x = -grid;
+        x < canvas.width + grid;
+        x += grid
     ) {
 
         ctx.beginPath();
@@ -1276,12 +1279,10 @@ function drawWorld() {
         ctx.stroke();
     }
 
-
     for (
-        let y = -100;
-        y <
-        canvas.height + 100;
-        y += gridSize
+        let y = -grid;
+        y < canvas.height + grid;
+        y += grid
     ) {
 
         ctx.beginPath();
@@ -1302,322 +1303,1182 @@ function drawWorld() {
 
 
 // ==========================================================
-// CAMINO DE PRUEBA
+// COLOR CARRETERA
 // ==========================================================
 
-function drawTestRoad() {
+function roadColor(type) {
 
-    const center =
-        worldToScreen(
-            WORLD_WIDTH / 2,
-            WORLD_HEIGHT / 2
-        );
+    if (type === "autopista") {
+        return "#27292d";
+    }
 
+    if (type === "autovia") {
+        return "#303237";
+    }
 
-    /*
-    Carretera horizontal
-    */
+    if (type === "nacional") {
+        return "#46484b";
+    }
 
-    ctx.fillStyle =
-        "#27292a";
+    if (type === "montaña") {
+        return "#514b45";
+    }
 
-
-    ctx.fillRect(
-        0,
-        center.y - 100,
-        canvas.width,
-        200
-    );
-
-
-    /*
-    Línea central
-    */
-
-    ctx.strokeStyle =
-        "#e5d16a";
-
-
-    ctx.lineWidth = 4;
-
-
-    ctx.setLineDash(
-        [30, 25]
-    );
-
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        0,
-        center.y
-    );
-
-    ctx.lineTo(
-        canvas.width,
-        center.y
-    );
-
-    ctx.stroke();
-
-
-    ctx.setLineDash([]);
-
-
-    /*
-    Línea lateral
-    */
-
-    ctx.strokeStyle =
-        "#ffffff";
-
-
-    ctx.lineWidth = 4;
-
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        0,
-        center.y - 80
-    );
-
-    ctx.lineTo(
-        canvas.width,
-        center.y - 80
-    );
-
-    ctx.moveTo(
-        0,
-        center.y + 80
-    );
-
-    ctx.lineTo(
-        canvas.width,
-        center.y + 80
-    );
-
-    ctx.stroke();
+    return "#585858";
 }
 
 
 // ==========================================================
-// CAMIÓN
+// DIBUJAR UNA CARRETERA
 // ==========================================================
 
-function drawTruck() {
+function drawRoad(road) {
 
-    const p =
-        worldToScreen(
-            truck.x,
-            truck.y
+    const points =
+        road.points
+        .map(p =>
+            worldToScreen(
+                p.x,
+                p.y
+            )
         );
 
 
-    ctx.save();
+    if (points.length < 2) {
+        return;
+    }
 
 
-    ctx.translate(
-        p.x,
-        p.y
+    // ------------------------------------------------------
+    // ASFALTO
+    // ------------------------------------------------------
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        points[0].x,
+        points[0].y
     );
 
+    for (
+        let i = 1;
+        i < points.length;
+        i++
+    ) {
 
-    ctx.rotate(
-        truck.angle
-    );
-
-
-    /*
-    SOMBRA
-    */
-
-    ctx.fillStyle =
-        "rgba(0,0,0,0.35)";
-
-
-    ctx.fillRect(
-        -32,
-        -63,
-        64,
-        145
-    );
-
-
-    /*
-    REMOLQUE
-    */
-
-    ctx.fillStyle =
-        "#d7d7d7";
-
-
-    ctx.fillRect(
-        -25,
-        0,
-        50,
-        85
-    );
+        ctx.lineTo(
+            points[i].x,
+            points[i].y
+        );
+    }
 
 
     ctx.strokeStyle =
-        "#444";
+        roadColor(
+            road.type
+        );
+
+    ctx.lineWidth =
+        road.width;
+
+    ctx.lineCap =
+        "round";
+
+    ctx.lineJoin =
+        "round";
+
+    ctx.stroke();
 
 
-    ctx.lineWidth = 3;
+    // ------------------------------------------------------
+    // ARCENES
+    // ------------------------------------------------------
 
+    ctx.beginPath();
 
-    ctx.strokeRect(
-        -25,
-        0,
-        50,
-        85
+    ctx.moveTo(
+        points[0].x,
+        points[0].y
     );
 
+    for (
+        let i = 1;
+        i < points.length;
+        i++
+    ) {
 
-    /*
-    CABINA
-    */
+        ctx.lineTo(
+            points[i].x,
+            points[i].y
+        );
+    }
 
-    ctx.fillStyle =
-        "#c83232";
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.75)";
 
+    ctx.lineWidth =
+        2;
 
-    ctx.fillRect(
-        -29,
-        -70,
-        58,
-        62
-    );
-
-
-    /*
-    PARABRISAS
-    */
-
-    ctx.fillStyle =
-        "#71a8c5";
+    ctx.stroke();
 
 
-    ctx.fillRect(
-        -21,
-        -61,
-        42,
-        25
-    );
+    // ------------------------------------------------------
+    // LÍNEA CENTRAL
+    // ------------------------------------------------------
 
+    if (
+        road.type !== "autopista"
+    ) {
 
-    /*
-    PARACHOQUES
-    */
+        ctx.beginPath();
 
-    ctx.fillStyle =
-        "#c9c9c9";
+        ctx.moveTo(
+            points[0].x,
+            points[0].y
+        );
 
+        for (
+            let i = 1;
+            i < points.length;
+            i++
+        ) {
 
-    ctx.fillRect(
-        -31,
-        -77,
-        62,
-        8
-    );
+            ctx.lineTo(
+                points[i].x,
+                points[i].y
+            );
+        }
 
+        ctx.strokeStyle =
+            "#e5d16a";
 
-    /*
-    RUEDAS
-    */
+        ctx.lineWidth = 2;
 
-    ctx.fillStyle =
-        "#111";
+        ctx.setLineDash(
+            [18, 15]
+        );
 
+        ctx.stroke();
 
-    ctx.fillRect(
-        -35,
-        -47,
-        10,
-        24
-    );
-
-
-    ctx.fillRect(
-        25,
-        -47,
-        10,
-        24
-    );
-
-
-    ctx.fillRect(
-        -35,
-        40,
-        10,
-        24
-    );
-
-
-    ctx.fillRect(
-        25,
-        40,
-        10,
-        24
-    );
-
-
-    /*
-    FAROS
-    */
-
-    ctx.fillStyle =
-        "#fff0a8";
-
-
-    ctx.fillRect(
-        -20,
-        -85,
-        12,
-        8
-    );
-
-
-    ctx.fillRect(
-        8,
-        -85,
-        12,
-        8
-    );
-
-
-    ctx.restore();
+        ctx.setLineDash([]);
+    }
 }
 
 
 // ==========================================================
-// HUD PRINCIPAL
+// DIBUJAR TODAS LAS CARRETERAS
 // ==========================================================
 
-function drawHUD() {
+function drawRoads() {
 
-    /*
-    PANEL
-    */
+    for (
+        const road of roads
+    ) {
 
-    const x = 20;
+        drawRoad(road);
+    }
+}
+
+
+// ==========================================================
+// CIUDADES
+// ==========================================================
+
+function drawCities() {
+
+    for (
+        const city of cities
+    ) {
+
+        const p =
+            worldToScreen(
+                city.x,
+                city.y
+            );
+
+
+        // Zona urbana
+
+        ctx.fillStyle =
+            "rgba(90,90,90,0.25)";
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            city.size * 0.35,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        // Punto
+
+        ctx.fillStyle =
+            "#e8e8e8";
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            7,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        // Nombre
+
+        ctx.fillStyle =
+            "#ffffff";
+
+        ctx.font =
+            "bold 18px Arial";
+
+        ctx.textAlign =
+            "center";
+
+        ctx.shadowColor =
+            "#000";
+
+        ctx.shadowBlur =
+            5;
+
+        ctx.fillText(
+            city.name,
+            p.x,
+            p.y -
+            city.size * 0.35
+        );
+
+        ctx.shadowBlur = 0;
+    }
+
+    ctx.textAlign =
+        "left";
+}
+
+
+// ==========================================================
+// PUEBLOS
+// ==========================================================
+
+function drawVillages() {
+
+    for (
+        const village of villages
+    ) {
+
+        const p =
+            worldToScreen(
+                village.x,
+                village.y
+            );
+
+
+        ctx.fillStyle =
+            "#d8c58a";
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            4,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        ctx.fillStyle =
+            "#fff";
+
+        ctx.font =
+            "13px Arial";
+
+        ctx.textAlign =
+            "left";
+
+        ctx.shadowColor =
+            "#000";
+
+        ctx.shadowBlur =
+            4;
+
+        ctx.fillText(
+            village.name,
+            p.x + 8,
+            p.y + 4
+        );
+
+        ctx.shadowBlur = 0;
+    }
+}
+
+
+// ==========================================================
+// PUNTOS DE INTERÉS
+// ==========================================================
+
+function drawPOIs() {
+
+    for (
+        const poi of pointsOfInterest
+    ) {
+
+        const p =
+            worldToScreen(
+                poi.x,
+                poi.y
+            );
+
+
+        let color =
+            "#fff";
+
+
+        let symbol =
+            "•";
+
+
+        if (
+            poi.type === "gasolinera"
+        ) {
+
+            color =
+                "#4dd2ff";
+
+            symbol =
+                "⛽";
+        }
+
+
+        if (
+            poi.type === "taller"
+        ) {
+
+            color =
+                "#ffb347";
+
+            symbol =
+                "🔧";
+        }
+
+
+        if (
+            poi.type === "descanso"
+        ) {
+
+            color =
+                "#80d890";
+
+            symbol =
+                "P";
+        }
+
+
+        ctx.font =
+            "20px Arial";
+
+        ctx.textAlign =
+            "center";
+
+        ctx.fillStyle =
+            color;
+
+        ctx.fillText(
+            symbol,
+            p.x,
+            p.y
+        );
+
+
+        ctx.font =
+            "11px Arial";
+
+        ctx.fillStyle =
+            "#fff";
+
+        ctx.shadowColor =
+            "#000";
+
+        ctx.shadowBlur =
+            4;
+
+        ctx.fillText(
+            poi.name,
+            p.x,
+            p.y + 20
+        );
+
+        ctx.shadowBlur = 0;
+    }
+
+
+    ctx.textAlign =
+        "left";
+}
+
+
+// ==========================================================
+// SEÑALES
+// ==========================================================
+
+function drawSigns() {
+
+    for (
+        const road of roads
+    ) {
+
+        if (
+            road.points.length < 2
+        ) continue;
+
+
+        const p =
+            road.points[1];
+
+
+        const screen =
+            worldToScreen(
+                p.x,
+                p.y
+            );
+
+
+        if (
+            screen.x < -100 ||
+            screen.x > canvas.width + 100 ||
+            screen.y < -100 ||
+            screen.y > canvas.height + 100
+        ) {
+
+            continue;
+        }
+
+
+        ctx.fillStyle =
+            "#888";
+
+        ctx.fillRect(
+            screen.x - 2,
+            screen.y,
+            4,
+            30
+        );
+
+
+        ctx.fillStyle =
+            "#1765b0";
+
+        ctx.fillRect(
+            screen.x - 20,
+            screen.y - 25,
+            40,
+            25
+        );
+
+
+        ctx.fillStyle =
+            "#fff";
+
+        ctx.font =
+            "bold 10px Arial";
+
+        ctx.textAlign =
+            "center";
+
+        ctx.fillText(
+            road.name,
+            screen.x,
+            screen.y - 9
+        );
+    }
+
+    ctx.textAlign =
+        "left";
+}
+
+
+// ==========================================================
+// MINIMAPA
+// ==========================================================
+
+function drawMinimap() {
+
+    const size = 230;
+
+    const x =
+        canvas.width -
+        size -
+        20;
 
     const y =
         20;
 
 
-    const width =
-        300;
+    ctx.fillStyle =
+        "rgba(5,10,12,0.88)";
+
+    ctx.fillRect(
+        x,
+        y,
+        size,
+        size
+    );
 
 
-    const height =
-        250;
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.25)";
+
+    ctx.strokeRect(
+        x,
+        y,
+        size,
+        size
+    );
+
+
+    const scaleX =
+        size /
+        WORLD_WIDTH;
+
+    const scaleY =
+        size /
+        WORLD_HEIGHT;
+
+
+    // ------------------------------------------------------
+    // CARRETERAS
+    // ------------------------------------------------------
+
+    for (
+        const road of roads
+    ) {
+
+        ctx.beginPath();
+
+        road.points.forEach(
+            (point, index) => {
+
+                const px =
+                    x +
+                    point.x *
+                    scaleX;
+
+                const py =
+                    y +
+                    point.y *
+                    scaleY;
+
+                if (index === 0) {
+
+                    ctx.moveTo(
+                        px,
+                        py
+                    );
+
+                } else {
+
+                    ctx.lineTo(
+                        px,
+                        py
+                    );
+                }
+            }
+        );
+
+
+        if (
+            road.type === "autopista"
+        ) {
+
+            ctx.strokeStyle =
+                "#ffffff";
+
+        } else if (
+            road.type === "autovia"
+        ) {
+
+            ctx.strokeStyle =
+                "#f1c84b";
+
+        } else if (
+            road.type === "nacional"
+        ) {
+
+            ctx.strokeStyle =
+                "#df8b40";
+
+        } else {
+
+            ctx.strokeStyle =
+                "#aaa";
+        }
+
+
+        ctx.lineWidth =
+            road.type === "autopista"
+                ? 3
+                : 2;
+
+
+        ctx.stroke();
+    }
+
+
+    // ------------------------------------------------------
+    // CIUDADES
+    // ------------------------------------------------------
+
+    ctx.font =
+        "bold 8px Arial";
+
+    ctx.textAlign =
+        "left";
+
+
+    for (
+        const city of cities
+    ) {
+
+        const px =
+            x +
+            city.x *
+            scaleX;
+
+        const py =
+            y +
+            city.y *
+            scaleY;
+
+
+        ctx.fillStyle =
+            "#fff";
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            px,
+            py,
+            3,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        ctx.fillText(
+            city.name,
+            px + 5,
+            py - 4
+        );
+    }
+
+
+    // ------------------------------------------------------
+    // PUEBLOS
+    // ------------------------------------------------------
+
+    for (
+        const village of villages
+    ) {
+
+        const px =
+            x +
+            village.x *
+            scaleX;
+
+        const py =
+            y +
+            village.y *
+            scaleY;
+
+
+        ctx.fillStyle =
+            "#d8c58a";
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            px,
+            py,
+            2,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+
+    // ------------------------------------------------------
+    // CAMIÓN
+    // ------------------------------------------------------
+
+    const tx =
+        x +
+        truck.x *
+        scaleX;
+
+    const ty =
+        y +
+        truck.y *
+        scaleY;
+
+
+    ctx.fillStyle =
+        "#ff3030";
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        tx,
+        ty,
+        5,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    // ------------------------------------------------------
+    // TEXTO
+    // ------------------------------------------------------
+
+    ctx.fillStyle =
+        "#fff";
+
+    ctx.font =
+        "bold 11px Arial";
+
+    ctx.fillText(
+        "MINIMAPA",
+        x + 10,
+        y + 18
+    );
+}
+
+
+// ==========================================================
+// MAPA COMPLETO
+// ==========================================================
+
+function drawFullMap() {
+
+    if (!fullMap) {
+        return;
+    }
+
+
+    ctx.fillStyle =
+        "rgba(5,8,10,0.94)";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    const margin = 50;
+
+
+    const mapWidth =
+        canvas.width -
+        margin * 2;
+
+    const mapHeight =
+        canvas.height -
+        margin * 2;
+
+
+    const scaleX =
+        mapWidth /
+        WORLD_WIDTH;
+
+    const scaleY =
+        mapHeight /
+        WORLD_HEIGHT;
+
+
+    // ------------------------------------------------------
+    // CARRETERAS
+    // ------------------------------------------------------
+
+    for (
+        const road of roads
+    ) {
+
+        ctx.beginPath();
+
+        road.points.forEach(
+            (point, index) => {
+
+                const px =
+                    margin +
+                    point.x *
+                    scaleX;
+
+                const py =
+                    margin +
+                    point.y *
+                    scaleY;
+
+
+                if (index === 0) {
+
+                    ctx.moveTo(
+                        px,
+                        py
+                    );
+
+                } else {
+
+                    ctx.lineTo(
+                        px,
+                        py
+                    );
+                }
+            }
+        );
+
+
+        if (
+            road.type === "autopista"
+        ) {
+
+            ctx.strokeStyle =
+                "#ffffff";
+
+        } else if (
+            road.type === "autovia"
+        ) {
+
+            ctx.strokeStyle =
+                "#e4c34c";
+
+        } else if (
+            road.type === "nacional"
+        ) {
+
+            ctx.strokeStyle =
+                "#e48c45";
+
+        } else {
+
+            ctx.strokeStyle =
+                "#888";
+        }
+
+
+        ctx.lineWidth =
+            road.type === "autopista"
+                ? 5
+                : 3;
+
+
+        ctx.stroke();
+    }
+
+
+    // ------------------------------------------------------
+    // CIUDADES
+    // ------------------------------------------------------
+
+    for (
+        const city of cities
+    ) {
+
+        const px =
+            margin +
+            city.x *
+            scaleX;
+
+        const py =
+            margin +
+            city.y *
+            scaleY;
+
+
+        ctx.fillStyle =
+            "#fff";
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            px,
+            py,
+            7,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        ctx.font =
+            "bold 15px Arial";
+
+        ctx.textAlign =
+            "left";
+
+        ctx.fillText(
+            city.name,
+            px + 10,
+            py - 8
+        );
+    }
+
+
+    // ------------------------------------------------------
+    // PUEBLOS
+    // ------------------------------------------------------
+
+    for (
+        const village of villages
+    ) {
+
+        const px =
+            margin +
+            village.x *
+            scaleX;
+
+        const py =
+            margin +
+            village.y *
+            scaleY;
+
+
+        ctx.fillStyle =
+            "#d8c58a";
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            px,
+            py,
+            4,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        ctx.font =
+            "11px Arial";
+
+        ctx.fillStyle =
+            "#ddd";
+
+        ctx.fillText(
+            village.name,
+            px + 7,
+            py + 4
+        );
+    }
+
+
+    // ------------------------------------------------------
+    // CAMIÓN
+    // ------------------------------------------------------
+
+    const tx =
+        margin +
+        truck.x *
+        scaleX;
+
+    const ty =
+        margin +
+        truck.y *
+        scaleY;
+
+
+    ctx.fillStyle =
+        "#ff3030";
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        tx,
+        ty,
+        9,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    // ------------------------------------------------------
+    // TÍTULO
+    // ------------------------------------------------------
+
+    ctx.fillStyle =
+        "#fff";
+
+    ctx.font =
+        "bold 24px Arial";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.fillText(
+        "MAPA",
+        canvas.width / 2,
+        35
+    );
+
+
+    ctx.font =
+        "14px Arial";
+
+    ctx.fillText(
+        "Pulsa M para volver al juego",
+        canvas.width / 2,
+        canvas.height - 20
+    );
+
+
+    ctx.textAlign =
+        "left";
+}
+
+
+// ==========================================================
+// BUSCAR GASOLINERA / TALLER
+// ==========================================================
+
+function getNearestServicePoint(type) {
+
+    let nearest =
+        null;
+
+    let nearestDistance =
+        Infinity;
+
+
+    for (
+        const poi of pointsOfInterest
+    ) {
+
+        if (
+            poi.type !== type
+        ) continue;
+
+
+        const d =
+            distance(
+                truck.x,
+                truck.y,
+                poi.x,
+                poi.y
+            );
+
+
+        if (
+            d <
+            nearestDistance
+        ) {
+
+            nearest =
+                poi;
+
+            nearestDistance =
+                d;
+        }
+    }
+
+
+    return nearest;
+}
+
+
+// ==========================================================
+// CÁMARA
+// ==========================================================
+
+function updateCamera() {
+
+    camera.x +=
+        (
+            truck.x -
+            camera.x
+        ) * 0.08;
+
+
+    camera.y +=
+        (
+            truck.y -
+            camera.y
+        ) * 0.08;
+}
+
+
+// ==========================================================
+// ACTUALIZAR CAMIÓN
+// ==========================================================
+
+function updateTruck() {
+
+    updateAcceleration();
+
+    updateBrakes();
+
+    applyNaturalResistance();
+
+    applySpeedLimits();
+
+    updateSteering();
+
+    updateMovement();
+
+    keepTruckInsideWorld();
+
+    updateRPM();
+
+    updateFuel();
+
+    updateCamera();
+}
+
+
+// ==========================================================
+// HUD
+// ==========================================================
+
+function drawHUD() {
+
+    const x = 20;
+    const y = 20;
+
+    const width = 300;
+    const height = 250;
 
 
     ctx.fillStyle =
         "rgba(10,14,18,0.88)";
-
 
     ctx.fillRect(
         x,
@@ -1627,17 +2488,11 @@ function drawHUD() {
     );
 
 
-    /*
-    VELOCIDAD
-    */
-
     ctx.fillStyle =
         "#aaa";
 
-
     ctx.font =
         "12px Arial";
-
 
     ctx.fillText(
         "VELOCIDAD",
@@ -1649,15 +2504,11 @@ function drawHUD() {
     ctx.fillStyle =
         "#fff";
 
-
     ctx.font =
         "bold 42px Arial";
 
-
     ctx.fillText(
-        Math.round(
-            truck.speed
-        ),
+        Math.round(truck.speed),
         x + 20,
         y + 68
     );
@@ -1666,7 +2517,6 @@ function drawHUD() {
     ctx.font =
         "16px Arial";
 
-
     ctx.fillText(
         "km/h",
         x + 105,
@@ -1674,17 +2524,11 @@ function drawHUD() {
     );
 
 
-    /*
-    MARCHA
-    */
-
     ctx.fillStyle =
         "#aaa";
 
-
     ctx.font =
         "12px Arial";
-
 
     ctx.fillText(
         "MARCHA",
@@ -1698,10 +2542,8 @@ function drawHUD() {
             ? "#ff4d4d"
             : "#fff";
 
-
     ctx.font =
         "bold 36px Arial";
-
 
     ctx.fillText(
         truck.reverse
@@ -1712,17 +2554,11 @@ function drawHUD() {
     );
 
 
-    /*
-    RPM
-    */
-
     ctx.fillStyle =
         "#aaa";
 
-
     ctx.font =
         "12px Arial";
-
 
     ctx.fillText(
         "RPM",
@@ -1734,27 +2570,20 @@ function drawHUD() {
     ctx.fillStyle =
         "#fff";
 
-
     ctx.font =
         "bold 20px Arial";
 
-
     ctx.fillText(
-        Math.round(
-            truck.rpm
-        ),
+        Math.round(truck.rpm),
         x + 60,
         y + 98
     );
 
 
-    /*
-    BARRA RPM
-    */
+    // RPM
 
     ctx.fillStyle =
         "#252525";
-
 
     ctx.fillRect(
         x + 20,
@@ -1777,8 +2606,7 @@ function drawHUD() {
 
 
     ctx.fillStyle =
-        rpmPercent >
-        0.85
+        rpmPercent > 0.85
             ? "#e44b4b"
             : "#e5c44d";
 
@@ -1787,28 +2615,22 @@ function drawHUD() {
         x + 20,
         y + 110,
         250 *
-        Math.max(
+        clamp(
+            rpmPercent,
             0,
-            Math.min(
-                1,
-                rpmPercent
-            )
+            1
         ),
         14
     );
 
 
-    /*
-    COMBUSTIBLE
-    */
+    // COMBUSTIBLE
 
     ctx.fillStyle =
         "#aaa";
 
-
     ctx.font =
         "12px Arial";
-
 
     ctx.fillText(
         "COMBUSTIBLE",
@@ -1820,7 +2642,6 @@ function drawHUD() {
     ctx.fillStyle =
         "#222";
 
-
     ctx.fillRect(
         x + 20,
         y + 160,
@@ -1830,8 +2651,7 @@ function drawHUD() {
 
 
     ctx.fillStyle =
-        truck.fuel <
-        20
+        truck.fuel < 20
             ? "#e44b4b"
             : "#52c878";
 
@@ -1851,24 +2671,18 @@ function drawHUD() {
     ctx.fillStyle =
         "#fff";
 
-
     ctx.fillText(
-        Math.round(
-            truck.fuel
-        ) +
+        Math.round(truck.fuel) +
         "%",
         x + 115,
         y + 192
     );
 
 
-    /*
-    DAÑOS
-    */
+    // DAÑOS
 
     ctx.fillStyle =
         "#aaa";
-
 
     ctx.fillText(
         "DAÑOS",
@@ -1880,7 +2694,6 @@ function drawHUD() {
     ctx.fillStyle =
         "#222";
 
-
     ctx.fillRect(
         x + 70,
         y + 204,
@@ -1890,8 +2703,7 @@ function drawHUD() {
 
 
     ctx.fillStyle =
-        truck.damage >
-        60
+        truck.damage > 60
             ? "#e44b4b"
             : "#d2a941";
 
@@ -1908,13 +2720,8 @@ function drawHUD() {
     );
 
 
-    /*
-    PESO
-    */
-
     ctx.fillStyle =
         "#aaa";
-
 
     ctx.fillText(
         "PESO: " +
@@ -1927,19 +2734,99 @@ function drawHUD() {
 
 
 // ==========================================================
-// MENSAJE
+// ACTUALIZAR HUD INFERIOR
 // ==========================================================
 
-let message =
-    "";
+function updateExternalHUD() {
 
-let messageTimer =
-    0;
+    const speed =
+        document.getElementById(
+            "bottomSpeed"
+        );
+
+    if (speed) {
+        speed.textContent =
+            Math.round(
+                truck.speed
+            );
+    }
 
 
-function showMessage(
-    text
-) {
+    const gear =
+        document.getElementById(
+            "bottomGear"
+        );
+
+    if (gear) {
+
+        gear.textContent =
+            truck.reverse
+                ? "R"
+                : truck.gear;
+    }
+
+
+    const cruise =
+        document.getElementById(
+            "cruiseStatus"
+        );
+
+    if (cruise) {
+        cruise.textContent =
+            "OFF";
+    }
+
+
+    const indicators =
+        document.getElementById(
+            "indicatorStatus"
+        );
+
+    if (indicators) {
+        indicators.textContent =
+            "—";
+    }
+
+
+    const lights =
+        document.getElementById(
+            "lightsStatus"
+        );
+
+    if (lights) {
+        lights.textContent =
+            "OFF";
+    }
+
+
+    const engineBrake =
+        document.getElementById(
+            "engineBrakeStatus"
+        );
+
+    if (engineBrake) {
+
+        engineBrake.textContent =
+            (
+                !keys.w &&
+                truck.speed > 5
+            )
+                ? "ON"
+                : "OFF";
+    }
+}
+
+
+// ==========================================================
+// MENSAJES
+// ==========================================================
+
+let message = "";
+
+let messageTimer = 0;
+
+
+function showMessage(text) {
 
     message =
         text;
@@ -1949,40 +2836,27 @@ function showMessage(
 }
 
 
-// ==========================================================
-// MENSAJE EN PANTALLA
-// ==========================================================
-
 function drawMessage() {
 
     if (
         messageTimer <= 0
     ) {
-
         return;
     }
 
 
-    const width =
-        420;
-
-
-    const height =
-        50;
-
+    const width = 440;
+    const height = 52;
 
     const x =
         canvas.width / 2 -
         width / 2;
 
-
-    const y =
-        25;
+    const y = 20;
 
 
     ctx.fillStyle =
         "rgba(0,0,0,0.85)";
-
 
     ctx.fillRect(
         x,
@@ -1995,180 +2869,230 @@ function drawMessage() {
     ctx.fillStyle =
         "#fff";
 
-
     ctx.font =
         "bold 18px Arial";
-
 
     ctx.textAlign =
         "center";
 
-
     ctx.fillText(
         message,
         canvas.width / 2,
-        y + 31
+        y + 32
     );
 
 
     ctx.textAlign =
         "left";
 
-
     messageTimer--;
 }
 
 
 // ==========================================================
-// ACTUALIZAR HUD DE INDEX.HTML
+// CAMIÓN
 // ==========================================================
 
-function updateExternalHUD() {
+function drawTruck() {
 
-    /*
-    VELOCIDAD
-    */
-
-    const speedElement =
-        document.getElementById(
-            "bottomSpeed"
-        );
-
-
-    if (
-        speedElement
-    ) {
-
-        speedElement.textContent =
-            Math.round(
-                truck.speed
-            );
+    if (fullMap) {
+        return;
     }
 
 
-    /*
-    MARCHA
-    */
-
-    const gearElement =
-        document.getElementById(
-            "bottomGear"
+    const p =
+        worldToScreen(
+            truck.x,
+            truck.y
         );
 
 
-    if (
-        gearElement
-    ) {
-
-        gearElement.textContent =
-            truck.reverse
-                ? "R"
-                : truck.gear;
-    }
+    ctx.save();
 
 
-    /*
-    CRUCERO
-    */
-
-    const cruiseElement =
-        document.getElementById(
-            "cruiseStatus"
-        );
+    ctx.translate(
+        p.x,
+        p.y
+    );
 
 
-    if (
-        cruiseElement
-    ) {
-
-        cruiseElement.textContent =
-            "OFF";
-    }
+    ctx.rotate(
+        truck.angle
+    );
 
 
-    /*
-    INTERMITENTES
-    */
+    // SOMBRA
 
-    const indicatorElement =
-        document.getElementById(
-            "indicatorStatus"
-        );
+    ctx.fillStyle =
+        "rgba(0,0,0,0.35)";
 
-
-    if (
-        indicatorElement
-    ) {
-
-        indicatorElement.textContent =
-            "—";
-    }
+    ctx.fillRect(
+        -32,
+        -63,
+        64,
+        145
+    );
 
 
-    /*
-    LUCES
-    */
+    // REMOLQUE
 
-    const lightsElement =
-        document.getElementById(
-            "lightsStatus"
-        );
+    ctx.fillStyle =
+        "#d7d7d7";
 
-
-    if (
-        lightsElement
-    ) {
-
-        lightsElement.textContent =
-            "OFF";
-    }
+    ctx.fillRect(
+        -25,
+        0,
+        50,
+        85
+    );
 
 
-    /*
-    FRENO MOTOR
-    */
+    ctx.strokeStyle =
+        "#444";
 
-    const engineBrakeElement =
-        document.getElementById(
-            "engineBrakeStatus"
-        );
+    ctx.lineWidth = 3;
 
-
-    if (
-        engineBrakeElement
-    ) {
-
-        const engineBraking =
-            !keys.w &&
-            truck.speed >
-            5;
+    ctx.strokeRect(
+        -25,
+        0,
+        50,
+        85
+    );
 
 
-        engineBrakeElement.textContent =
-            engineBraking
-                ? "ON"
-                : "OFF";
-    }
+    // CABINA
+
+    ctx.fillStyle =
+        "#c83232";
+
+    ctx.fillRect(
+        -29,
+        -70,
+        58,
+        62
+    );
+
+
+    // PARABRISAS
+
+    ctx.fillStyle =
+        "#71a8c5";
+
+    ctx.fillRect(
+        -21,
+        -61,
+        42,
+        25
+    );
+
+
+    // PARACHOQUES
+
+    ctx.fillStyle =
+        "#c9c9c9";
+
+    ctx.fillRect(
+        -31,
+        -77,
+        62,
+        8
+    );
+
+
+    // RUEDAS
+
+    ctx.fillStyle =
+        "#111";
+
+    ctx.fillRect(
+        -35,
+        -47,
+        10,
+        24
+    );
+
+    ctx.fillRect(
+        25,
+        -47,
+        10,
+        24
+    );
+
+    ctx.fillRect(
+        -35,
+        40,
+        10,
+        24
+    );
+
+    ctx.fillRect(
+        25,
+        40,
+        10,
+        24
+    );
+
+
+    // FAROS
+
+    ctx.fillStyle =
+        "#fff0a8";
+
+    ctx.fillRect(
+        -20,
+        -85,
+        12,
+        8
+    );
+
+    ctx.fillRect(
+        8,
+        -85,
+        12,
+        8
+    );
+
+
+    ctx.restore();
 }
 
 
 // ==========================================================
-// GAME LOOP
+// BUCLE PRINCIPAL
 // ==========================================================
 
 function gameLoop() {
 
     updateTruck();
 
-    drawWorld();
 
-    drawTestRoad();
+    if (fullMap) {
 
-    drawTruck();
+        drawFullMap();
 
-    drawHUD();
+    } else {
 
-    drawMessage();
+        drawWorld();
+
+        drawRoads();
+
+        drawCities();
+
+        drawVillages();
+
+        drawPOIs();
+
+        drawSigns();
+
+        drawTruck();
+
+        drawHUD();
+
+        drawMinimap();
+
+        drawMessage();
+    }
+
 
     updateExternalHUD();
 
@@ -2184,7 +3108,7 @@ function gameLoop() {
 // ==========================================================
 
 showMessage(
-    "FASE 1: CAMIÓN LISTO"
+    "FASE 2: MAPA CARGADO"
 );
 
 
